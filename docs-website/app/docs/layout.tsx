@@ -60,6 +60,12 @@ export default function DocsLayout({
                 <div className="text-[10px] text-neutral-600 mb-3 tracking-widest">CORE CONCEPTS</div>
                 <div className="space-y-1">
                   <Link
+                    href="/docs/configuration"
+                    className="block px-3 py-1.5 text-xs text-neutral-500 hover:text-white transition"
+                  >
+                    Configuration
+                  </Link>
+                  <Link
                     href="/docs/routing"
                     className="block px-3 py-1.5 text-xs text-neutral-500 hover:text-white transition"
                   >
