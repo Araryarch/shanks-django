@@ -1,12 +1,12 @@
 """Like model"""
 
-from shanks import CASCADE, DateTimeField, ForeignKey, Model, User
+from shanks import CASCADE, DateTimeField, ForeignKey, Model
 
 from .post import Post
 
 
 class Like(Model):
-    user = ForeignKey(User, on_delete=CASCADE, related_name="likes")
+    user = ForeignKey("auth.User", on_delete=CASCADE, related_name="likes")
     post = ForeignKey(Post, on_delete=CASCADE, related_name="likes")
     created_at = DateTimeField(auto_now_add=True)
 

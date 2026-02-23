@@ -89,54 +89,45 @@ SET_NULL = models.SET_NULL
 PROTECT = models.PROTECT
 
 
-# User model wrapper with Prisma-like methods
-class User(DjangoUser):
-    """User model wrapper with Prisma-like syntax"""
+# User helper class with Prisma-like methods
+class UserManager:
+    """User manager with Prisma-like syntax"""
 
-    class Meta:
-        proxy = True
-
-    @classmethod
-    def find_many(cls, **filters):
+    @staticmethod
+    def find_many(**filters):
         """Find many users"""
-        return cls.objects.filter(**filters)
+        return DjangoUser.objects.filter(**filters)
 
-    @classmethod
-    def find_first(cls, **filters):
+    @staticmethod
+    def find_first(**filters):
         """Find first user"""
-        return cls.objects.filter(**filters).first()
+        return DjangoUser.objects.filter(**filters).first()
 
-    @classmethod
-    def find_unique(cls, **filters):
+    @staticmethod
+    def find_unique(**filters):
         """Find unique user"""
         try:
-            return cls.objects.get(**filters)
-        except cls.DoesNotExist:
+            return DjangoUser.objects.get(**filters)
+        except DjangoUser.DoesNotExist:
             return None
 
-    @classmethod
-    def create(cls, username, email, password, **kwargs):
+    @staticmethod
+    def create(username, email, password, **kwargs):
         """Create user"""
-        return cls.objects.create_user(
+        return DjangoUser.objects.create_user(
             username=username, email=email, password=password, **kwargs
         )
 
-    @classmethod
-    def count(cls, **filters):
+    @staticmethod
+    def count(**filters):
         """Count users"""
         if filters:
-            return cls.objects.filter(**filters).count()
-        return cls.objects.count()
+            return DjangoUser.objects.filter(**filters).count()
+        return DjangoUser.objects.count()
 
-    def update_self(self, **data):
-        """Update current user"""
-        for key, value in data.items():
-            if key != "password":
-                setattr(self, key, value)
-            else:
-                self.set_password(value)
-        self.save()
-        return self
+
+# Export User as the manager
+User = UserManager
 
 
 def authenticate(username: str, password: str):

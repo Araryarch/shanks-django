@@ -1,8 +1,7 @@
 """Post model"""
 
 from shanks import (CASCADE, SET_NULL, CharField, DateTimeField, ForeignKey,
-                    ManyToManyField, Model, SlugField, TextField, User,
-                    slugify)
+                    ManyToManyField, Model, SlugField, TextField, slugify)
 
 from .category import Category
 from .tag import Tag
@@ -13,7 +12,7 @@ class Post(Model):
     slug = SlugField(unique=True, blank=True)
     content = TextField()
     excerpt = TextField(blank=True)
-    author = ForeignKey(User, on_delete=CASCADE, related_name="posts")
+    author = ForeignKey("auth.User", on_delete=CASCADE, related_name="posts")
     category = ForeignKey(
         Category, on_delete=SET_NULL, null=True, blank=True, related_name="posts"
     )
