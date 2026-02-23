@@ -1,3 +1,5 @@
+![shanks](https://github.com/user-attachments/assets/70a7c689-f475-41b4-862b-6b9371d127e9)
+
 # Shanks Django
 
 🚀 Express.js-like framework built on Django. Write Django APIs with Express.js syntax and Prisma-like ORM.
