@@ -102,7 +102,20 @@ CORS.enable(app,
 
 ## Installation
 
-### From VSCode Marketplace
+### From GitHub Releases (Recommended)
+
+1. Download the latest `.vsix` file from [Releases](https://github.com/Ararya/shanks-django/releases)
+2. Open VSCode
+3. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
+4. Click "..." menu → Install from VSIX
+5. Select the downloaded file
+
+Or via command line:
+```bash
+code --install-extension shanks-django-0.1.0.vsix
+```
+
+### From VSCode Marketplace (Coming Soon)
 
 1. Open VSCode
 2. Go to Extensions (Ctrl+Shift+X)
@@ -121,6 +134,29 @@ CORS.enable(app,
 ## Contributing
 
 Contributions are welcome! Please visit [GitHub](https://github.com/Ararya/shanks-django).
+
+## Development
+
+### Build VSIX locally
+
+```bash
+cd vscode-extension
+npm install -g @vscode/vsce
+vsce package
+```
+
+This will generate `shanks-django-x.x.x.vsix` file.
+
+### GitHub Actions
+
+The extension is automatically built and released via GitHub Actions:
+
+- **Automatic Release**: Push a tag starting with `v` (e.g., `v0.1.0`)
+- **Manual Build**: Go to Actions → "Build VSCode Extension (Manual)" → Run workflow
+
+The VSIX file will be available in:
+- Release assets (for tagged releases)
+- Workflow artifacts (for manual builds)
 
 ## License
 

@@ -84,3 +84,55 @@ vsce unpublish <publisher>.<extension-name>
 
 - [VSCode Extension Publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 - [Marketplace](https://marketplace.visualstudio.com/)
+
+
+## Automated Release via GitHub Actions
+
+### Automatic Release on Tag
+
+1. Update version in `package.json`:
+   ```bash
+   cd vscode-extension
+   # Edit package.json, bump version to x.x.x
+   ```
+
+2. Commit and push:
+   ```bash
+   git add package.json
+   git commit -m "chore: bump extension version to x.x.x"
+   git push
+   ```
+
+3. Create and push tag:
+   ```bash
+   git tag vx.x.x
+   git push origin vx.x.x
+   ```
+
+4. GitHub Actions will automatically:
+   - Build the VSIX file
+   - Create a GitHub Release
+   - Attach VSIX to the release
+
+### Manual Build via GitHub Actions
+
+1. Go to repository on GitHub
+2. Click "Actions" tab
+3. Select "Build VSCode Extension (Manual)"
+4. Click "Run workflow"
+5. Download VSIX from workflow artifacts
+
+## Local Build Script
+
+Use the provided build script:
+
+```bash
+cd vscode-extension
+./build.sh
+```
+
+This will:
+- Install vsce if needed
+- Convert icon SVG to PNG
+- Package the extension
+- Show installation command

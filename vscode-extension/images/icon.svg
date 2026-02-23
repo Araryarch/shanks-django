@@ -1,7 +1,0 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="128" height="128" rx="24" fill="#2D3748"/>
-  <path d="M32 48C32 44.6863 34.6863 42 38 42H54C57.3137 42 60 44.6863 60 48V64C60 67.3137 57.3137 70 54 70H38C34.6863 70 32 67.3137 32 64V48Z" fill="#48BB78"/>
-  <path d="M68 48C68 44.6863 70.6863 42 74 42H90C93.3137 42 96 44.6863 96 48V64C96 67.3137 93.3137 70 90 70H74C70.6863 70 68 67.3137 68 64V48Z" fill="#4299E1"/>
-  <path d="M32 78C32 74.6863 34.6863 72 38 72H90C93.3137 72 96 74.6863 96 78V94C96 97.3137 93.3137 100 90 100H38C34.6863 100 32 97.3137 32 94V78Z" fill="#ED8936"/>
-  <text x="64" y="115" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#E2E8F0" text-anchor="middle">SHANKS</text>
-</svg>
