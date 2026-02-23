@@ -2,6 +2,7 @@ from .app import App
 from .request import Request
 from .response import Response
 from .cors import CORS, enable_cors
+from .swagger import SwaggerUI, enable_swagger
 from .db import (
     DatabaseConfig,
     MongoDB,
@@ -20,6 +21,8 @@ __all__ = [
     "Response",
     "CORS",
     "enable_cors",
+    "SwaggerUI",
+    "enable_swagger",
     "DatabaseConfig",
     "MongoDB",
     "Redis",

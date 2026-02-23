@@ -1,0 +1,227 @@
+{
+  "Shanks App": {
+    "prefix": "shanks-app",
+    "body": [
+      "from shanks import App",
+      "",
+      "app = App()",
+      "",
+      "@app.get('${1:api/hello}')",
+      "def ${2:hello}(req):",
+      "    return {'${3:message}': '${4:Hello World!}'}",
+      "",
+      "urlpatterns = app.get_urls()"
+    ],
+    "description": "Create a new Shanks app"
+  },
+  "Shanks GET Route": {
+    "prefix": "shanks-get",
+    "body": [
+      "@app.get('${1:api/endpoint}')",
+      "def ${2:handler}(req):",
+      "    ${3:return {'data': 'value'}}"
+    ],
+    "description": "Create a GET route"
+  },
+  "Shanks POST Route": {
+    "prefix": "shanks-post",
+    "body": [
+      "@app.post('${1:api/endpoint}')",
+      "def ${2:handler}(req):",
+      "    data = req.body",
+      "    ${3:return {'created': True}}"
+    ],
+    "description": "Create a POST route"
+  },
+  "Shanks PUT Route": {
+    "prefix": "shanks-put",
+    "body": [
+      "@app.put('${1:api/endpoint/<int:id>}')",
+      "def ${2:handler}(req, ${3:id}):",
+      "    data = req.body",
+      "    ${4:return {'updated': True}}"
+    ],
+    "description": "Create a PUT route"
+  },
+  "Shanks DELETE Route": {
+    "prefix": "shanks-delete",
+    "body": [
+      "@app.delete('${1:api/endpoint/<int:id>}')",
+      "def ${2:handler}(req, ${3:id}):",
+      "    ${4:return {'deleted': True}}"
+    ],
+    "description": "Create a DELETE route"
+  },
+  "Shanks Middleware": {
+    "prefix": "shanks-middleware",
+    "body": [
+      "def ${1:middleware_name}(req):",
+      "    ${2:# Middleware logic}",
+      "    ${3:pass}",
+      "",
+      "app.use(${1:middleware_name})"
+    ],
+    "description": "Create middleware"
+  },
+  "Shanks Auth Middleware": {
+    "prefix": "shanks-auth",
+    "body": [
+      "from shanks import Response",
+      "",
+      "def auth_middleware(req):",
+      "    if not req.headers.get('Authorization'):",
+      "        return Response().status_code(401).json({'error': 'Unauthorized'})",
+      "",
+      "app.use(auth_middleware)"
+    ],
+    "description": "Create auth middleware"
+  },
+  "Shanks CORS": {
+    "prefix": "shanks-cors",
+    "body": [
+      "from shanks import CORS",
+      "",
+      "CORS.enable(app,",
+      "    origins=['${1:http://localhost:3000}'],",
+      "    credentials=${2:True}",
+      ")"
+    ],
+    "description": "Enable CORS"
+  },
+  "Shanks Swagger": {
+    "prefix": "shanks-swagger",
+    "body": [
+      "from shanks import SwaggerUI",
+      "",
+      "SwaggerUI.enable(app,",
+      "    title='${1:My API}',",
+      "    version='${2:1.0.0}',",
+      "    description='${3:API documentation}'",
+      ")"
+    ],
+    "description": "Enable Swagger UI"
+  },
+  "Shanks Swagger Doc": {
+    "prefix": "shanks-doc",
+    "body": [
+      "@SwaggerUI.doc(",
+      "    summary='${1:Endpoint summary}',",
+      "    description='${2:Detailed description}',",
+      "    tags=['${3:Tag}'],",
+      "    responses={",
+      "        200: {'description': '${4:Success}'}",
+      "    }",
+      ")"
+    ],
+    "description": "Add Swagger documentation"
+  },
+  "Shanks Response": {
+    "prefix": "shanks-response",
+    "body": [
+      "return Response().status_code(${1:200}).json({${2:'key': 'value'}})"
+    ],
+    "description": "Return Response object"
+  },
+  "Shanks Response with Cookie": {
+    "prefix": "shanks-cookie",
+    "body": [
+      "return Response().cookie('${1:token}', '${2:value}', max_age=${3:3600}).json({${4:'success': True}})"
+    ],
+    "description": "Return Response with cookie"
+  },
+  "Shanks Redirect": {
+    "prefix": "shanks-redirect",
+    "body": [
+      "return Response().redirect('${1:/new-url}')"
+    ],
+    "description": "Redirect response"
+  },
+  "Shanks MongoDB": {
+    "prefix": "shanks-mongodb",
+    "body": [
+      "from shanks import MongoDB",
+      "",
+      "MongoDB.connect(",
+      "    host='${1:localhost}',",
+      "    database='${2:mydb}',",
+      "    username='${3:user}',",
+      "    password='${4:pass}'",
+      ")",
+      "",
+      "@app.get('${5:api/data}')",
+      "def ${6:get_data}(req):",
+      "    data = list(MongoDB.db.${7:collection}.find({}))",
+      "    return {'data': data}"
+    ],
+    "description": "Setup MongoDB connection"
+  },
+  "Shanks Redis": {
+    "prefix": "shanks-redis",
+    "body": [
+      "from shanks import Redis",
+      "",
+      "Redis.connect(",
+      "    host='${1:localhost}',",
+      "    password='${2:pass}'",
+      ")",
+      "",
+      "@app.get('${3:api/cache/<key>}')",
+      "def ${4:get_cache}(req, key):",
+      "    value = Redis.client.get(key)",
+      "    return {'value': value}"
+    ],
+    "description": "Setup Redis connection"
+  },
+  "Shanks PostgreSQL": {
+    "prefix": "shanks-postgres",
+    "body": [
+      "# In settings.py",
+      "from shanks import DatabaseConfig",
+      "",
+      "DATABASES = {",
+      "    'default': DatabaseConfig.postgres(",
+      "        host='${1:localhost}',",
+      "        database='${2:mydb}',",
+      "        user='${3:user}',",
+      "        password='${4:pass}'",
+      "    )",
+      "}"
+    ],
+    "description": "Setup PostgreSQL database"
+  },
+  "Shanks Full API": {
+    "prefix": "shanks-full",
+    "body": [
+      "from shanks import App, Response, CORS, SwaggerUI",
+      "",
+      "app = App()",
+      "",
+      "# Enable CORS",
+      "CORS.enable(app, origins=['http://localhost:3000'])",
+      "",
+      "# Enable Swagger",
+      "SwaggerUI.enable(app, title='${1:My API}', version='${2:1.0.0}')",
+      "",
+      "# Middleware",
+      "def logger(req):",
+      "    print(f\"{req.method} {req.path}\")",
+      "",
+      "app.use(logger)",
+      "",
+      "# Routes",
+      "@app.get('api/${3:resource}')",
+      "@SwaggerUI.doc(summary='Get ${3:resource}', tags=['${4:Tag}'])",
+      "def get_${3:resource}(req):",
+      "    return {'${3:resource}': []}",
+      "",
+      "@app.post('api/${3:resource}')",
+      "@SwaggerUI.doc(summary='Create ${3:resource}', tags=['${4:Tag}'])",
+      "def create_${3:resource}(req):",
+      "    data = req.body",
+      "    return Response().status_code(201).json(data)",
+      "",
+      "urlpatterns = app.get_urls()"
+    ],
+    "description": "Create full API with CORS and Swagger"
+  }
+}

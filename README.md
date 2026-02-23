@@ -626,6 +626,43 @@ fetch('http://localhost:8000/api/protected', {
 })
 ```
 
+### Swagger/OpenAPI Documentation
+
+```python
+from shanks import App, SwaggerUI
+
+app = App()
+
+# Enable Swagger UI at /docs
+SwaggerUI.enable(app,
+    title="My API",
+    version="1.0.0",
+    description="API documentation"
+)
+
+# Add documentation to routes
+@app.get('api/users/<int:user_id>')
+@SwaggerUI.doc(
+    summary="Get user by ID",
+    description="Returns a single user",
+    tags=["Users"],
+    parameters=[{
+        "name": "user_id",
+        "in": "path",
+        "required": True,
+        "schema": {"type": "integer"}
+    }],
+    responses={
+        200: {"description": "Success"},
+        404: {"description": "User not found"}
+    }
+)
+def get_user(req, user_id):
+    return {'id': user_id, 'name': 'John'}
+
+# Visit http://localhost:8000/docs for Swagger UI
+```
+
 ## Project Structure
 
 ```
@@ -745,3 +782,26 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - GitHub: https://github.com/Ararya/shanks-django
 - PyPI: https://pypi.org/project/shanks-django/
 - Issues: https://github.com/Ararya/shanks-django/issues
+- VSCode Extension: Search "Shanks Django" in VSCode Marketplace
+
+## VSCode Extension
+
+Install the Shanks Django extension for VSCode to get:
+- Code snippets for common patterns
+- IntelliSense support
+- Quick scaffolding
+
+Search for "Shanks Django" in VSCode Extensions or install from:
+https://marketplace.visualstudio.com/items?itemName=Ararya.shanks-django
+
+### Extension Snippets
+
+- `shanks-app` - Create new app
+- `shanks-get` - GET route
+- `shanks-post` - POST route
+- `shanks-cors` - Enable CORS
+- `shanks-swagger` - Enable Swagger
+- `shanks-mongodb` - MongoDB setup
+- `shanks-full` - Full API template
+
+Type the snippet prefix and press Tab!

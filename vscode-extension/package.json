@@ -1,0 +1,48 @@
+{
+  "name": "shanks-django",
+  "displayName": "Shanks Django",
+  "description": "Snippets and syntax highlighting for Shanks Django framework",
+  "version": "0.1.0",
+  "publisher": "Ararya",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Snippets",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "shanks",
+    "django",
+    "python",
+    "express",
+    "api",
+    "rest"
+  ],
+  "contributes": {
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/shanks.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "python",
+        "extensions": [
+          ".py"
+        ]
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ararya/shanks-django"
+  },
+  "bugs": {
+    "url": "https://github.com/Ararya/shanks-django/issues"
+  },
+  "homepage": "https://github.com/Ararya/shanks-django#readme",
+  "license": "MIT"
+}
