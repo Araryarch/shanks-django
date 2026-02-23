@@ -70,7 +70,7 @@ django-admin startproject myproject
 cd myproject
 ```
 
-3. Create `api.py`:
+3. Create `app/routes/__init__.py`:
 ```python
 from shanks import App
 
@@ -80,20 +80,43 @@ app = App()
 def hello(req):
     return {'message': 'Hello from Shanks!'}
 
+# Export URL patterns - no urls.py needed!
 urlpatterns = app.get_urls()
 ```
 
-4. Update `urls.py`:
+4. Update `settings.py`:
 ```python
-from django.urls import path, include
-from . import api
+from shanks import (
+    get_base_dir, get_secret_key, get_debug,
+    get_allowed_hosts, get_database, get_installed_apps,
+    get_middleware, get_templates
+)
 
-urlpatterns = [
-    path('', include(api.urlpatterns)),
-]
+BASE_DIR = get_base_dir(__file__)
+SECRET_KEY = get_secret_key()
+DEBUG = get_debug()
+ALLOWED_HOSTS = get_allowed_hosts()
+
+INSTALLED_APPS = get_installed_apps(['app'])
+MIDDLEWARE = get_middleware()
+ROOT_URLCONF = 'app.routes'  # Point directly to routes!
+TEMPLATES = get_templates()
+WSGI_APPLICATION = 'wsgi.application'
+DATABASES = get_database(BASE_DIR)
+
+# ... rest of settings
 ```
 
-5. Run server:
+5. Create minimal `wsgi.py`:
+```python
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+application = get_wsgi_application()
+```
+
+6. Run server:
 ```bash
 shanks run
 # Visit: http://127.0.0.1:8000/api/hello
