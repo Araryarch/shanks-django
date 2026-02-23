@@ -34,6 +34,20 @@
             border-left: 4px solid #dc2626;
             padding-left: 20px;
             margin-bottom: 60px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .header-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid #dc2626;
+        }
+        
+        .header-content {
+            flex: 1;
         }
         
         .logo {
@@ -174,29 +188,30 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">SHANKS</div>
-            <div class="tagline">Express.js for Django</div>
+            <img src="https://github.com/user-attachments/assets/70a7c689-f475-41b4-862b-6b9371d127e9" alt="Shanks" class="header-image">
+            <div class="header-content">
+                <div class="logo">SHANKS</div>
+                <div class="tagline">Express.js for Django</div>
+            </div>
         </div>
         
-        <div class="code-block">
-<span class="keyword">from</span> shanks <span class="keyword">import</span> App
+        <div class="code-block"><span class="keyword">from</span> shanks <span class="keyword">import</span> App
 
-app = App()
+app = <span class="function">App</span>()
 
 <span class="decorator">@app.get</span>(<span class="string">'api/hello'</span>)
 <span class="keyword">def</span> <span class="function">hello</span>(req):
     <span class="keyword">return</span> {<span class="string">'message'</span>: <span class="string">'Hello World'</span>}
 
-urlpatterns = app.get_urls()
-        </div>
+urlpatterns = app.get_urls()</div>
         
         <div class="features">
             <div class="feature">
-                <div class="feature-title">Express Syntax</div>
+                <div class="feature-title">Easy Syntax</div>
                 <div class="feature-desc">Familiar decorator-based routing inspired by Express.js</div>
             </div>
             <div class="feature">
-                <div class="feature-title">Prisma ORM</div>
+                <div class="feature-title">Django ORM</div>
                 <div class="feature-desc">Modern database queries with find_many(), create(), update()</div>
             </div>
             <div class="feature">
