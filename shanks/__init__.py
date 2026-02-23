@@ -1,7 +1,15 @@
 from .app import App
 from .cors import CORS, enable_cors
-from .db import (DatabaseConfig, MongoDB, Redis, setup_mongodb, setup_mysql,
-                 setup_postgres, setup_redis, setup_sqlite)
+from .db import (
+    DatabaseConfig,
+    MongoDB,
+    Redis,
+    setup_mongodb,
+    setup_mysql,
+    setup_postgres,
+    setup_redis,
+    setup_sqlite,
+)
 from .request import Request
 from .response import Response
 from .swagger import SwaggerUI, enable_swagger
