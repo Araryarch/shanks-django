@@ -1,0 +1,17 @@
+meta {
+  name: Get Post
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/posts/1
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

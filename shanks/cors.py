@@ -1,6 +1,7 @@
 """Built-in CORS support for Shanks Django"""
 
-from typing import List, Union, Optional
+from typing import List, Optional, Union
+
 from .response import Response
 
 

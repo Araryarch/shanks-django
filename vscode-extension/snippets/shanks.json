@@ -223,5 +223,119 @@
       "urlpatterns = app.get_urls()"
     ],
     "description": "Create full API with CORS and Swagger"
+  },
+  "Shanks Model": {
+    "prefix": "shanks-model",
+    "body": [
+      "from shanks import Model, CharField, TextField, DateTimeField, ForeignKey, CASCADE",
+      "",
+      "class ${1:ModelName}(Model):",
+      "    ${2:name} = CharField(max_length=${3:100})",
+      "    ${4:description} = TextField(blank=True)",
+      "    created_at = DateTimeField(auto_now_add=True)",
+      "    updated_at = DateTimeField(auto_now=True)",
+      "",
+      "    class Meta:",
+      "        ordering = ['-created_at']",
+      "",
+      "    def __str__(self):",
+      "        return self.${2:name}"
+    ],
+    "description": "Create Shanks model"
+  },
+  "Shanks Find Many": {
+    "prefix": "shanks-find-many",
+    "body": [
+      "${1:Model}.find_many(${2:})"
+    ],
+    "description": "Find many records (Prisma-like)"
+  },
+  "Shanks Find First": {
+    "prefix": "shanks-find-first",
+    "body": [
+      "${1:Model}.find_first(${2:})"
+    ],
+    "description": "Find first record (Prisma-like)"
+  },
+  "Shanks Find Unique": {
+    "prefix": "shanks-find-unique",
+    "body": [
+      "${1:Model}.find_unique(${2:id=${3:1}})"
+    ],
+    "description": "Find unique record (Prisma-like)"
+  },
+  "Shanks Create": {
+    "prefix": "shanks-create",
+    "body": [
+      "${1:Model}.create(",
+      "    ${2:field}='${3:value}'",
+      ")"
+    ],
+    "description": "Create record (Prisma-like)"
+  },
+  "Shanks Update": {
+    "prefix": "shanks-update",
+    "body": [
+      "${1:Model}.update(",
+      "    where={'${2:id}': ${3:1}},",
+      "    data={'${4:field}': '${5:value}'}",
+      ")"
+    ],
+    "description": "Update records (Prisma-like)"
+  },
+  "Shanks Delete Many": {
+    "prefix": "shanks-delete-many",
+    "body": [
+      "${1:Model}.delete_many(${2:id=${3:1}})"
+    ],
+    "description": "Delete many records (Prisma-like)"
+  },
+  "Shanks Count": {
+    "prefix": "shanks-count",
+    "body": [
+      "${1:Model}.count(${2:})"
+    ],
+    "description": "Count records (Prisma-like)"
+  },
+  "Shanks Update Self": {
+    "prefix": "shanks-update-self",
+    "body": [
+      "${1:instance}.update_self(",
+      "    ${2:field}='${3:value}'",
+      ")"
+    ],
+    "description": "Update instance (Prisma-like)"
+  },
+  "Shanks Delete Self": {
+    "prefix": "shanks-delete-self",
+    "body": [
+      "${1:instance}.delete_self()"
+    ],
+    "description": "Delete instance (Prisma-like)"
+  },
+  "Shanks User Create": {
+    "prefix": "shanks-user-create",
+    "body": [
+      "from shanks import User",
+      "",
+      "user = User.create(",
+      "    username='${1:username}',",
+      "    email='${2:email}',",
+      "    password='${3:password}'",
+      ")"
+    ],
+    "description": "Create user with Shanks"
+  },
+  "Shanks Authenticate": {
+    "prefix": "shanks-authenticate",
+    "body": [
+      "from shanks import authenticate",
+      "",
+      "user = authenticate(",
+      "    username='${1:username}',",
+      "    password='${2:password}'",
+      ")"
+    ],
+    "description": "Authenticate user with Shanks"
   }
 }

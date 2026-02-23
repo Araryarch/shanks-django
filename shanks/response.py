@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render as django_render
 
 

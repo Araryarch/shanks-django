@@ -1,7 +1,7 @@
 """Built-in Swagger/OpenAPI support for Shanks Django"""
 
-from typing import Dict, Any, Optional, List
 import json
+from typing import Any, Dict, List, Optional
 
 
 class SwaggerUI:

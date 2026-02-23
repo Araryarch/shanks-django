@@ -1,7 +1,9 @@
 """Basic tests for Shanks Django"""
 
 import json
+
 from django.test import RequestFactory
+
 from shanks import App, Request, Response
 
 
@@ -30,7 +32,9 @@ def test_request_wrapper():
     req = Request(django_req)
     assert req.method == "GET"
     assert req.path == "/test"
-    assert req.query.get("name") == "john"
+    # query returns a dict from QueryDict
+    query_dict = req.query
+    assert query_dict["name"] == "john"
 
 
 def test_response_builder():

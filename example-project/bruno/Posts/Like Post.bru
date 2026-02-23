@@ -1,0 +1,25 @@
+meta {
+  name: Like Post
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/posts/1/like
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return liked status", function() {
+    expect(res.body.liked).to.be.a('boolean');
+  });
+}

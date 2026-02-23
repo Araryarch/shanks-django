@@ -1,0 +1,33 @@
+meta {
+  name: Create Post
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/posts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "My First Post",
+    "content": "This is the content of my first post. It's amazing!",
+    "excerpt": "A short excerpt about my post"
+  }
+}
+
+tests {
+  test("should return 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("should return post data", function() {
+    expect(res.body.title).to.equal("My First Post");
+  });
+}

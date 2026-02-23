@@ -1,7 +1,7 @@
 """Database connection helpers for Shanks Django"""
 
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class DatabaseConfig:
