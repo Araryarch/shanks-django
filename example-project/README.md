@@ -1,220 +1,154 @@
-# Blog API - Shanks Django Example Project
+# Shanks Django Example Project
 
-Complete example project with authentication and CRUD operations using Shanks Django framework with Prisma-like ORM.
+Express.js-like API built with Shanks Django framework.
 
 ## Features
 
+- ✨ **No urls.py needed** - routes auto-configured
+- 🚀 Simple routing with grouping (like Gin/Express)
 - 🔐 JWT Authentication
-- 👤 User Management
-- 📝 Blog Posts CRUD
-- 💬 Comments CRUD
-- 🏷️ Categories CRUD
-- 🔖 Tags CRUD
-- 👍 Likes System
-- 📚 Swagger Documentation
-- 🌐 CORS Enabled
-- 🗄️ PostgreSQL/SQLite Support
-- ⚡ Prisma-like ORM Syntax
-- 🎯 Express.js-like Routes
-- 🚀 Clean Architecture
+- 📝 Blog API (Posts, Comments, Categories, Tags)
+- 🎨 Auto-generated Swagger UI
+- 🔄 CORS enabled
+- 📦 SQLite database (easily switch to PostgreSQL/MySQL)
+- ⚡ Prisma-like ORM syntax
 
-## What's Special
+## Quick Start
 
-This example project demonstrates:
-- **No Django imports in routes** - Everything wrapped in Shanks
-- **Prisma-like ORM** - `find_many()`, `find_unique()`, `create()`, etc.
-- **Express.js syntax** - `@app.get()`, `@app.post()`, etc.
-- **Clean architecture** - DTOs, middleware, services separation
-- **Modern patterns** - JWT auth, validation, error handling
-
-## Architecture
-
-```
-example-project/
-├── app/
-│   ├── __init__.py
-│   ├── config.py           # Configuration
-│   ├── middleware/         # Middleware
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   └── logger.py
-│   ├── dto/                # Data Transfer Objects
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── post.py
-│   │   └── comment.py
-│   ├── models/             # Django Models
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── post.py
-│   │   ├── comment.py
-│   │   ├── category.py
-│   │   └── tag.py
-│   ├── routes/             # API Routes
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── users.py
-│   │   ├── posts.py
-│   │   ├── comments.py
-│   │   ├── categories.py
-│   │   └── tags.py
-│   ├── services/           # Business Logic
-│   │   ├── __init__.py
-│   │   ├── auth_service.py
-│   │   ├── user_service.py
-│   │   └── post_service.py
-│   └── utils/              # Utilities
-│       ├── __init__.py
-│       ├── jwt.py
-│       └── validators.py
-├── manage.py
-├── requirements.txt
-└── README.md
-```
-
-## Setup
-
-1. Install dependencies:
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-2. Run migrations:
-```bash
+# Run migrations
 python manage.py migrate
-```
 
-3. Create superuser:
-```bash
-python manage.py createsuperuser
-```
-
-4. Run server:
-```bash
+# Start server
 shanks run
 # or
 python manage.py runserver
 ```
 
-5. Visit:
-- API: http://localhost:8000/api/
-- Swagger: http://localhost:8000/docs
-- Admin: http://localhost:8000/admin
+Visit:
+- API: http://127.0.0.1:8000/api/health
+- Swagger: http://127.0.0.1:8000/swagger
+
+## Project Structure
+
+```
+example-project/
+├── settings.py          # Django settings (minimal config)
+├── wsgi.py             # WSGI (auto-configured by Shanks)
+├── manage.py           # Django management
+└── app/
+    ├── routes/
+    │   ├── __init__.py  # Main routes - exports urlpatterns
+    │   ├── auth.py      # Authentication routes
+    │   ├── posts.py     # Post routes
+    │   ├── comments.py  # Comment routes
+    │   └── ...
+    ├── models/          # Database models
+    ├── dto/            # Data Transfer Objects
+    ├── middleware/     # Custom middleware
+    └── utils/          # Utilities
+```
+
+## Routing Example
+
+```python
+# app/routes/__init__.py
+from shanks import App
+from . import auth, posts, comments
+
+app = App()
+
+# Include all routers - Simple!
+app.include(auth.router, posts.router, comments.router)
+
+# Export urlpatterns - No urls.py needed!
+urlpatterns = app.get_urls()
+```
+
+```python
+# app/routes/posts.py
+from shanks import App
+
+router = App()
+
+@router.get("api/posts")
+def list_posts(req):
+    return {"posts": []}
+
+@router.post("api/posts")
+def create_post(req):
+    return {"post": {}}
+```
+
+**That's it! No Django urls.py complexity.**
 
 ## API Endpoints
 
 ### Authentication
 - POST `/api/auth/register` - Register new user
 - POST `/api/auth/login` - Login
-- POST `/api/auth/logout` - Logout
 - GET `/api/auth/me` - Get current user
-
-### Users
-- GET `/api/users` - List users
-- GET `/api/users/<id>` - Get user
-- PUT `/api/users/<id>` - Update user
-- DELETE `/api/users/<id>` - Delete user
 
 ### Posts
 - GET `/api/posts` - List posts
 - POST `/api/posts` - Create post
-- GET `/api/posts/<id>` - Get post
-- PUT `/api/posts/<id>` - Update post
-- DELETE `/api/posts/<id>` - Delete post
-- POST `/api/posts/<id>/like` - Like post
+- GET `/api/posts/:id` - Get post
+- PUT `/api/posts/:id` - Update post
+- DELETE `/api/posts/:id` - Delete post
+- POST `/api/posts/:id/like` - Like/unlike post
 
 ### Comments
-- GET `/api/posts/<post_id>/comments` - List comments
-- POST `/api/posts/<post_id>/comments` - Create comment
-- PUT `/api/comments/<id>` - Update comment
-- DELETE `/api/comments/<id>` - Delete comment
+- POST `/api/posts/:id/comments` - Add comment
 
-### Categories
+### Categories & Tags
 - GET `/api/categories` - List categories
-- POST `/api/categories` - Create category
-- GET `/api/categories/<id>` - Get category
-- PUT `/api/categories/<id>` - Update category
-- DELETE `/api/categories/<id>` - Delete category
-
-### Tags
 - GET `/api/tags` - List tags
-- POST `/api/tags` - Create tag
-- GET `/api/tags/<id>` - Get tag
-- PUT `/api/tags/<id>` - Update tag
-- DELETE `/api/tags/<id>` - Delete tag
 
-## Testing
+See full API documentation at `/swagger`
+
+## Environment Variables
 
 ```bash
-pytest
+# .env
+SECRET_KEY=your-secret-key
+DEBUG=True
+ALLOWED_HOSTS=*
+DATABASE_URL=sqlite:///db.sqlite3  # or postgres://...
+JWT_SECRET=your-jwt-secret
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-## Code Examples
-
-### Prisma-like ORM Usage
+## Prisma-like ORM
 
 ```python
-from shanks import User, Model, CharField, TextField
+from shanks import User, Post
 
-# Find users
+# Find
 users = User.find_many()
 user = User.find_unique(username='john')
-active_users = User.find_many(is_active=True)
 
-# Create user
-user = User.create(
-    username='john',
-    email='john@example.com',
-    password='secret123'
-)
+# Create
+user = User.create(username='john', email='john@example.com')
 
-# Update user
-user.update_self(email='newemail@example.com')
+# Update
+user.update_self(email='new@example.com')
 
-# Delete user
+# Delete
 user.delete_self()
 
 # Count
 total = User.count()
-active_count = User.count(is_active=True)
 ```
 
-### Express.js-like Routes
+## Testing with Bruno
 
-```python
-from shanks import App, Response
-
-app = App()
-
-@app.get('api/posts')
-def list_posts(req):
-    posts = Post.find_many()
-    return {'posts': [{'id': p.id, 'title': p.title} for p in posts]}
-
-@app.post('api/posts')
-def create_post(req):
-    post = Post.create(
-        title=req.body.get('title'),
-        content=req.body.get('content'),
-        author=req.user
-    )
-    return Response().status_code(201).json({'id': post.id})
-```
-
-### No Django Imports
-
-All Django functionality is wrapped in Shanks:
-
-```python
-# ❌ Old way (Django)
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.utils.text import slugify
-
-# ✅ New way (Shanks)
-from shanks import User, authenticate, slugify
-```
+API tests are available in the `bruno/` directory. Install [Bruno](https://www.usebruno.com/) and open the collection.
 
 ## Learn More
 
-See the main [Shanks Django README](../README.md) for complete documentation.
+- [Routing Examples](ROUTING_EXAMPLE.md) - Learn about route grouping
+- [Quick Start Guide](QUICKSTART.md) - Step-by-step tutorial
+- [Shanks Documentation](../README.md) - Full framework docs

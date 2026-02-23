@@ -9,9 +9,10 @@ from .response import Response
 
 
 class App:
-    def __init__(self):
+    def __init__(self, prefix: str = ""):
         self.routes = []
         self.middlewares = []
+        self.prefix = prefix.rstrip("/")
 
     def use(self, middleware: Callable):
         """Add middleware to the app"""
@@ -51,9 +52,10 @@ class App:
         """Decorator for GET routes"""
 
         def decorator(handler):
+            full_path = f"{self.prefix}/{route}".strip("/")
             self.routes.append(
                 {
-                    "path": route,
+                    "path": full_path,
                     "view": self._create_view(handler, "GET"),
                     "name": handler.__name__,
                 }
@@ -66,9 +68,10 @@ class App:
         """Decorator for POST routes"""
 
         def decorator(handler):
+            full_path = f"{self.prefix}/{route}".strip("/")
             self.routes.append(
                 {
-                    "path": route,
+                    "path": full_path,
                     "view": self._create_view(handler, "POST"),
                     "name": handler.__name__,
                 }
@@ -81,9 +84,10 @@ class App:
         """Decorator for PUT routes"""
 
         def decorator(handler):
+            full_path = f"{self.prefix}/{route}".strip("/")
             self.routes.append(
                 {
-                    "path": route,
+                    "path": full_path,
                     "view": self._create_view(handler, "PUT"),
                     "name": handler.__name__,
                 }
@@ -96,9 +100,10 @@ class App:
         """Decorator for DELETE routes"""
 
         def decorator(handler):
+            full_path = f"{self.prefix}/{route}".strip("/")
             self.routes.append(
                 {
-                    "path": route,
+                    "path": full_path,
                     "view": self._create_view(handler, "DELETE"),
                     "name": handler.__name__,
                 }
@@ -106,6 +111,23 @@ class App:
             return handler
 
         return decorator
+
+    def group(self, prefix: str):
+        """Create a route group with prefix (like Gin)"""
+        return App(prefix=f"{self.prefix}/{prefix}".strip("/"))
+
+    def include(self, *apps):
+        """Include routes from other App instances"""
+        for app in apps:
+            # Copy routes from other app
+            for route in app.routes:
+                self.routes.append(route)
+            # Copy middlewares
+            for middleware in app.middlewares:
+                if middleware not in self.middlewares:
+                    self.middlewares.append(middleware)
+        return self
+
 
     def get_urls(self):
         """Get Django URL patterns"""

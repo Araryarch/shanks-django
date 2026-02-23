@@ -19,6 +19,27 @@ __author__ = "Ararya"
 __email__ = "araryaarch@gmail.com"
 
 
+from .app import App
+from .cors import CORS, enable_cors
+from .db import (
+    DatabaseConfig,
+    MongoDB,
+    Redis,
+    setup_mongodb,
+    setup_mysql,
+    setup_postgres,
+    setup_redis,
+    setup_sqlite,
+)
+from .request import Request
+from .response import Response
+from .swagger import SwaggerUI, enable_swagger
+
+__version__ = "0.1.0"
+__author__ = "Ararya"
+__email__ = "araryaarch@gmail.com"
+
+
 # Lazy import ORM to avoid Django settings requirement
 def __getattr__(name):
     if name in [
@@ -48,6 +69,32 @@ def __getattr__(name):
         from . import orm
 
         return getattr(orm, name)
+    
+    # Schema imports
+    if name in ["Schema", "model"]:
+        from . import schema
+        return getattr(schema, name)
+    
+    # Config imports
+    if name in [
+        "Config",
+        "env",
+        "env_bool",
+        "env_list",
+        "env_int",
+        "get_base_dir",
+        "get_secret_key",
+        "get_debug",
+        "get_allowed_hosts",
+        "get_database",
+        "get_installed_apps",
+        "get_middleware",
+        "get_templates",
+        "get_password_validators",
+    ]:
+        from . import config
+        return getattr(config, name)
+    
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
@@ -89,6 +136,24 @@ __all__ = [
     "setup_sqlite",
     "setup_mongodb",
     "setup_redis",
+    # Schema
+    "Schema",
+    "model",
+    # Config
+    "Config",
+    "env",
+    "env_bool",
+    "env_list",
+    "env_int",
+    "get_base_dir",
+    "get_secret_key",
+    "get_debug",
+    "get_allowed_hosts",
+    "get_database",
+    "get_installed_apps",
+    "get_middleware",
+    "get_templates",
+    "get_password_validators",
 ]
 
 # CLI is available via 'shanks' command after installation
