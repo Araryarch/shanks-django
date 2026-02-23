@@ -128,7 +128,6 @@ class App:
                     self.middlewares.append(middleware)
         return self
 
-
     def get_urls(self):
         """Get Django URL patterns"""
         from django.http import HttpResponse

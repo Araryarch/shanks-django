@@ -6,36 +6,37 @@ from pathlib import Path
 
 class Config:
     """Auto-load environment variables and provide helpers"""
-    
+
     _loaded = False
-    
+
     @classmethod
     def load(cls):
         """Auto-load .env file"""
         if cls._loaded:
             return
-        
+
         try:
             from dotenv import load_dotenv
+
             load_dotenv()
             cls._loaded = True
         except ImportError:
             # dotenv not installed, skip
             pass
-    
+
     @classmethod
     def get(cls, key, default=None):
         """Get environment variable with auto-load"""
         cls.load()
         return os.getenv(key, default)
-    
+
     @classmethod
     def get_bool(cls, key, default=False):
         """Get boolean environment variable"""
         cls.load()
         value = os.getenv(key, str(default))
         return value.lower() in ("true", "1", "yes", "on")
-    
+
     @classmethod
     def get_list(cls, key, default=None, separator=","):
         """Get list from environment variable"""
@@ -44,7 +45,7 @@ class Config:
         if value is None:
             return default or []
         return [item.strip() for item in value.split(separator)]
-    
+
     @classmethod
     def get_int(cls, key, default=0):
         """Get integer environment variable"""
@@ -105,11 +106,12 @@ def get_allowed_hosts(default="*"):
 def get_database(base_dir):
     """Get database configuration"""
     database_url = env("DATABASE_URL")
-    
+
     if database_url:
         from .db import DatabaseConfig
+
         return {"default": DatabaseConfig.from_url(database_url)}
-    
+
     return {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -128,10 +130,10 @@ def get_installed_apps(extra_apps=None):
         "django.contrib.messages",
         "django.contrib.staticfiles",
     ]
-    
+
     if extra_apps:
         apps.extend(extra_apps)
-    
+
     return apps
 
 
@@ -170,9 +172,11 @@ def get_password_validators(debug=True):
     """Get password validators (disabled in debug mode)"""
     if debug:
         return []
-    
+
     return [
-        {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+        {
+            "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+        },
         {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
         {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
         {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},

@@ -69,12 +69,13 @@ def __getattr__(name):
         from . import orm
 
         return getattr(orm, name)
-    
+
     # Schema imports
     if name in ["Schema", "model"]:
         from . import schema
+
         return getattr(schema, name)
-    
+
     # Config imports
     if name in [
         "Config",
@@ -93,8 +94,9 @@ def __getattr__(name):
         "get_password_validators",
     ]:
         from . import config
+
         return getattr(config, name)
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
