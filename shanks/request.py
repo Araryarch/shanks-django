@@ -43,6 +43,11 @@ class Request:
         """Get authenticated user"""
         return self._request.user
 
+    @user.setter
+    def user(self, value):
+        """Set authenticated user"""
+        self._request.user = value
+
     @property
     def session(self):
         """Get session"""
