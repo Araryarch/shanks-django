@@ -27,8 +27,13 @@ classifiers = [
   "Framework :: Django",
 ]
 dependencies = [
-  "django>=3.2"
+  "django>=3.2",
+  "black>=23.0.0",
+  "watchdog>=3.0.0"
 ]
+
+[project.scripts]
+shanks = "shanks.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Ararya/shanks-django"

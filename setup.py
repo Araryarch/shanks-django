@@ -34,7 +34,27 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "django>=3.2",
+        "black>=23.0.0",
+        "watchdog>=3.0.0",
     ],
+    extras_require={
+        "postgres": ["psycopg2-binary>=2.9.0"],
+        "mysql": ["mysqlclient>=2.1.0"],
+        "mongodb": ["pymongo>=4.0.0"],
+        "redis": ["redis>=4.0.0"],
+        "all": [
+            "psycopg2-binary>=2.9.0",
+            "mysqlclient>=2.1.0",
+            "pymongo>=4.0.0",
+            "redis>=4.0.0",
+            "dj-database-url>=2.0.0",
+        ],
+    },
+    entry_points={
+        "console_scripts": [
+            "shanks=shanks.cli:main",
+        ],
+    },
     keywords="django express framework web api rest",
     project_urls={
         "Bug Reports": "https://github.com/Ararya/shanks-django/issues",
