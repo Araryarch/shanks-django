@@ -1,4 +1,5 @@
 """Example: CORS configuration with Shanks Django"""
+
 from shanks import App, CORS, enable_cors, Response
 
 # ============================================
@@ -152,8 +153,10 @@ def login(req):
 
     # Validate credentials
     if username == "admin" and password == "password":
-        return Response().cookie("session", "abc123", max_age=3600).json(
-            {"success": True, "user": username}
+        return (
+            Response()
+            .cookie("session", "abc123", max_age=3600)
+            .json({"success": True, "user": username})
         )
 
     return Response().status_code(401).json({"error": "Invalid credentials"})

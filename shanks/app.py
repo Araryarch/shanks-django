@@ -23,7 +23,7 @@ class App:
         def view(request, *args, **kwargs):
             # Wrap Django request
             app_request = Request(request)
-            
+
             # Store reference for CORS
             request._shanks_request = app_request
 

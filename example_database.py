@@ -1,4 +1,5 @@
 """Example: Database connections with Shanks Django"""
+
 from shanks import App, Response, DatabaseConfig, MongoDB, Redis
 
 app = App()
@@ -107,8 +108,10 @@ def create_mongo_user(req):
     try:
         user_data = {"name": req.body.get("name"), "email": req.body.get("email")}
         result = MongoDB.db.users.insert_one(user_data)
-        return Response().status_code(201).json(
-            {"id": str(result.inserted_id), "user": user_data}
+        return (
+            Response()
+            .status_code(201)
+            .json({"id": str(result.inserted_id), "user": user_data})
         )
     except RuntimeError as e:
         return Response().status_code(500).json({"error": str(e)})

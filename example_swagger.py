@@ -1,4 +1,5 @@
 """Example: Swagger/OpenAPI documentation with Shanks Django"""
+
 from shanks import App, SwaggerUI, Response
 
 app = App()
@@ -124,8 +125,10 @@ def get_users(req):
 )
 def create_user(req):
     data = req.body
-    return Response().status_code(201).json(
-        {"id": 1, "name": data.get("name"), "email": data.get("email")}
+    return (
+        Response()
+        .status_code(201)
+        .json({"id": 1, "name": data.get("name"), "email": data.get("email")})
     )
 
 
