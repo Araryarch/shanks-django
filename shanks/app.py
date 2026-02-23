@@ -109,7 +109,39 @@ class App:
 
     def get_urls(self):
         """Get Django URL patterns"""
-        return [
+        from django.http import HttpResponse
+        from django.shortcuts import render
+        from django.template.loader import get_template
+        from django.template import TemplateDoesNotExist
+
+        # Check if user has defined root path
+        has_root = any(
+            route["path"] == "" or route["path"] == "/" for route in self.routes
+        )
+
+        patterns = [
             path(route["path"].lstrip("/"), route["view"], name=route["name"])
             for route in self.routes
         ]
+
+        # Add default landing page if no root path defined
+        if not has_root:
+
+            def default_landing(request):
+                # Try to render user's index.html first
+                try:
+                    get_template("index.html")
+                    return render(request, "index.html")
+                except TemplateDoesNotExist:
+                    # Render Shanks default landing page
+                    import os
+                    from pathlib import Path
+
+                    landing_path = Path(__file__).parent / "templates" / "landing.html"
+                    with open(landing_path, "r") as f:
+                        html = f.read()
+                    return HttpResponse(html)
+
+            patterns.insert(0, path("", default_landing, name="shanks_landing"))
+
+        return patterns
