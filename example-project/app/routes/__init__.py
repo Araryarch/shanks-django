@@ -1,11 +1,7 @@
 """API Routes"""
 
-from app.config import (
-    API_DESCRIPTION,
-    API_TITLE,
-    API_VERSION,
-    CORS_ALLOWED_ORIGINS,
-)
+from app.config import (API_DESCRIPTION, API_TITLE, API_VERSION,
+                        CORS_ALLOWED_ORIGINS)
 from app.middleware import logger_middleware
 
 from shanks import CORS, App, SwaggerUI

@@ -1,6 +1,6 @@
 # Blog API - Shanks Django Example Project
 
-Complete example project with authentication and CRUD operations.
+Complete example project with authentication and CRUD operations using Shanks Django framework with Prisma-like ORM.
 
 ## Features
 
@@ -14,6 +14,18 @@ Complete example project with authentication and CRUD operations.
 - 📚 Swagger Documentation
 - 🌐 CORS Enabled
 - 🗄️ PostgreSQL/SQLite Support
+- ⚡ Prisma-like ORM Syntax
+- 🎯 Express.js-like Routes
+- 🚀 Clean Architecture
+
+## What's Special
+
+This example project demonstrates:
+- **No Django imports in routes** - Everything wrapped in Shanks
+- **Prisma-like ORM** - `find_many()`, `find_unique()`, `create()`, etc.
+- **Express.js syntax** - `@app.get()`, `@app.post()`, etc.
+- **Clean architecture** - DTOs, middleware, services separation
+- **Modern patterns** - JWT auth, validation, error handling
 
 ## Architecture
 
@@ -136,3 +148,73 @@ python manage.py runserver
 ```bash
 pytest
 ```
+
+## Code Examples
+
+### Prisma-like ORM Usage
+
+```python
+from shanks import User, Model, CharField, TextField
+
+# Find users
+users = User.find_many()
+user = User.find_unique(username='john')
+active_users = User.find_many(is_active=True)
+
+# Create user
+user = User.create(
+    username='john',
+    email='john@example.com',
+    password='secret123'
+)
+
+# Update user
+user.update_self(email='newemail@example.com')
+
+# Delete user
+user.delete_self()
+
+# Count
+total = User.count()
+active_count = User.count(is_active=True)
+```
+
+### Express.js-like Routes
+
+```python
+from shanks import App, Response
+
+app = App()
+
+@app.get('api/posts')
+def list_posts(req):
+    posts = Post.find_many()
+    return {'posts': [{'id': p.id, 'title': p.title} for p in posts]}
+
+@app.post('api/posts')
+def create_post(req):
+    post = Post.create(
+        title=req.body.get('title'),
+        content=req.body.get('content'),
+        author=req.user
+    )
+    return Response().status_code(201).json({'id': post.id})
+```
+
+### No Django Imports
+
+All Django functionality is wrapped in Shanks:
+
+```python
+# ❌ Old way (Django)
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.utils.text import slugify
+
+# ✅ New way (Shanks)
+from shanks import User, authenticate, slugify
+```
+
+## Learn More
+
+See the main [Shanks Django README](../README.md) for complete documentation.

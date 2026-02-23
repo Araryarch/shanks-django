@@ -1,18 +1,8 @@
 """Post model"""
 
-from shanks import (
-    CASCADE,
-    SET_NULL,
-    CharField,
-    DateTimeField,
-    ForeignKey,
-    ManyToManyField,
-    Model,
-    SlugField,
-    TextField,
-    User,
-    slugify,
-)
+from shanks import (CASCADE, SET_NULL, CharField, DateTimeField, ForeignKey,
+                    ManyToManyField, Model, SlugField, TextField, User,
+                    slugify)
 
 from .category import Category
 from .tag import Tag
