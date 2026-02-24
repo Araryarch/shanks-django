@@ -1,7 +1,5 @@
 """ORM wrapper for Shanks Django - Prisma-like syntax"""
 
-from django.contrib.auth import authenticate as django_authenticate
-from django.contrib.auth.models import User as DjangoUser
 from django.db import models
 from django.utils.text import slugify as django_slugify
 
@@ -89,23 +87,31 @@ SET_NULL = models.SET_NULL
 PROTECT = models.PROTECT
 
 
-# User helper class with Prisma-like methods
+# User helper class with Prisma-like methods (lazy import)
 class UserManager:
     """User manager with Prisma-like syntax"""
 
     @staticmethod
+    def _get_user_model():
+        """Lazy import Django User"""
+        from django.contrib.auth.models import User as DjangoUser
+
+        return DjangoUser
+
+    @staticmethod
     def find_many(**filters):
         """Find many users"""
-        return DjangoUser.objects.filter(**filters)
+        return UserManager._get_user_model().objects.filter(**filters)
 
     @staticmethod
     def find_first(**filters):
         """Find first user"""
-        return DjangoUser.objects.filter(**filters).first()
+        return UserManager._get_user_model().objects.filter(**filters).first()
 
     @staticmethod
     def find_unique(**filters):
         """Find unique user"""
+        DjangoUser = UserManager._get_user_model()
         try:
             return DjangoUser.objects.get(**filters)
         except DjangoUser.DoesNotExist:
@@ -114,13 +120,14 @@ class UserManager:
     @staticmethod
     def create(username, email, password, **kwargs):
         """Create user"""
-        return DjangoUser.objects.create_user(
+        return UserManager._get_user_model().objects.create_user(
             username=username, email=email, password=password, **kwargs
         )
 
     @staticmethod
     def count(**filters):
         """Count users"""
+        DjangoUser = UserManager._get_user_model()
         if filters:
             return DjangoUser.objects.filter(**filters).count()
         return DjangoUser.objects.count()
@@ -132,11 +139,15 @@ User = UserManager
 
 def authenticate(username: str, password: str):
     """Authenticate user"""
+    from django.contrib.auth import authenticate as django_authenticate
+
     return django_authenticate(username=username, password=password)
 
 
 def create_user(username: str, email: str, password: str, **kwargs):
     """Create new user"""
+    from django.contrib.auth.models import User as DjangoUser
+
     return DjangoUser.objects.create_user(
         username=username, email=email, password=password, **kwargs
     )

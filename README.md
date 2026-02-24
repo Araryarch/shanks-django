@@ -12,7 +12,8 @@
 - 🎯 **Express.js-like syntax** - Familiar routing for Node.js developers
 - 🔥 **Prisma-like ORM** - Modern database queries with `find_many()`, `create()`, etc.
 - 🚀 **Built on Django** - Full Django power under the hood
-- 🔧 **Middleware support** - Express-style middleware
+- ⚡ **Built-in Caching** - Auto-cache GET requests, 10x faster responses
+- 🔧 **Middleware support** - Express-style middleware (req, res, next)
 - 📦 **Simple Request/Response** - Clean API for handling HTTP
 - 🎨 **Built-in formatter** - Black code formatting
 - 🔍 **Built-in linter** - Flake8 linting
@@ -20,7 +21,9 @@
 - 🗄️ **Multi-database support** - PostgreSQL, MySQL, MongoDB, Redis
 - 📚 **Swagger/OpenAPI** - Auto-generated API documentation
 - 🌐 **CORS built-in** - Easy cross-origin setup
+- 🏗️ **Go-like Architecture** - Clean project structure (internal/, entity/, dto/)
 - 🎁 **VSCode Extension** - Snippets and IntelliSense
+- 🛠️ **CLI Generator** - Generate CRUD & Auth with one command
 
 ## 📦 Installation
 
@@ -49,77 +52,64 @@ pip install shanks-django[all]
 
 ## 🚀 Quick Start
 
-### Option 1: Auto-generate Project
-
 ```bash
+# Create new project with Go-like architecture
 shanks new myproject
 cd myproject
+
+# Generate CRUD endpoints
+shanks create posts --crud
+
+# Generate auth endpoints  
+shanks create auth --simple
+
+# Run migrations
+python manage.py makemigrations
+python manage.py migrate
+
+# Start server
 shanks run
 ```
 
-### Option 2: Manual Setup
+Visit:
+- API: http://127.0.0.1:8000/api/health
+- Swagger: http://127.0.0.1:8000/docs
 
-1. Install dependencies:
-```bash
-pip install shanks-django django
-```
+That's it! You now have a fully functional API with:
+- ✅ Auto-caching (10x faster GET requests)
+- ✅ Smart cache invalidation
+- ✅ Swagger documentation
+- ✅ CRUD endpoints with pagination
+- ✅ Authentication endpoints
+- ✅ Go-like project structure
 
-2. Create Django project:
-```bash
-django-admin startproject myproject
-cd myproject
-```
+## 💡 Simple Example
 
-3. Create `app/routes/__init__.py`:
 ```python
-from shanks import App
+# internal/routes/__init__.py
+from shanks import App, auto_cache, swagger
 
 app = App()
 
-@app.get('api/hello')
-def hello(req):
-    return {'message': 'Hello from Shanks!'}
+# Built-in caching - enabled by default!
+app.use(auto_cache)
 
-# Export URL patterns - no urls.py needed!
+# Auto-generated Swagger docs
+app.use(swagger(title="My API"))
+
+@app.get('api/posts')
+def list_posts(req):
+    # First request: fetches from DB, caches result
+    # Next requests: served from cache (10x faster!)
+    return {'posts': [...]}
+
+@app.post('api/posts')
+def create_post(req):
+    # Automatically invalidates /api/posts cache
+    post = Post.create(**req.body)
+    return {'id': post.id}
+
 urlpatterns = app.get_urls()
-```
-
-4. Update `settings.py`:
-```python
-from shanks import (
-    get_base_dir, get_secret_key, get_debug,
-    get_allowed_hosts, get_database, get_installed_apps,
-    get_middleware, get_templates
-)
-
-BASE_DIR = get_base_dir(__file__)
-SECRET_KEY = get_secret_key()
-DEBUG = get_debug()
-ALLOWED_HOSTS = get_allowed_hosts()
-
-INSTALLED_APPS = get_installed_apps(['app'])
-MIDDLEWARE = get_middleware()
-ROOT_URLCONF = 'app.routes'  # Point directly to routes!
-TEMPLATES = get_templates()
-WSGI_APPLICATION = 'wsgi.application'
-DATABASES = get_database(BASE_DIR)
-
-# ... rest of settings
-```
-
-5. Create minimal `wsgi.py`:
-```python
-import os
-from django.core.wsgi import get_wsgi_application
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
-application = get_wsgi_application()
-```
-
-6. Run server:
-```bash
-shanks run
-# Visit: http://127.0.0.1:8000/api/hello
 ```
 
 ## 🛠️ CLI Commands
@@ -133,18 +123,54 @@ shanks run 0.0.0.0:8000       # Start on all interfaces
 # Project management
 shanks new myproject          # Create new project
 
+# Generate CRUD endpoints (NEW!)
+shanks create posts --crud    # Generate full CRUD with model
+                              # Creates: model, routes with pagination & findById
+
+# Generate Auth endpoints (NEW!)
+shanks create auth --simple   # Generate /login, /register, /me
+shanks create auth --complete # Generate /login, /register, /verify, /me
+
 # Code quality
 shanks format                 # Format with Black
 shanks lint                   # Lint with Flake8
 shanks check                  # Format + Lint
 
-# Database migrations
-shanks migrate                # Run migrations
-shanks makemigrations         # Create migrations
-shanks push                   # Create and run migrations (Prisma-like)
-
 # Help
 shanks help                   # Show all commands
+```
+
+### Generate CRUD Endpoints
+
+Quickly scaffold complete CRUD operations:
+
+```bash
+shanks create posts --crud
+```
+
+This creates:
+- `app/models/posts.py` - Model with SORM
+- `app/routes/posts.py` - Complete CRUD routes
+
+Includes:
+- ✅ List with pagination (page, limit)
+- ✅ Get by ID (findById)
+- ✅ Create
+- ✅ Update
+- ✅ Delete
+- ✅ Auth checks
+- ✅ Error handling
+
+### Generate Auth Endpoints
+
+Simple auth (login, register, me):
+```bash
+shanks create auth --simple
+```
+
+Complete auth (with email verification):
+```bash
+shanks create auth --complete
 ```
 
 ## 📖 Core Concepts
@@ -288,41 +314,104 @@ from shanks import App, Response
 
 app = App()
 
-# Simple logging middleware
-def logger(req):
+# Simple logging middleware - Express.js style!
+def logger(req, res, next):
     print(f"{req.method} {req.path}")
+    next()  # Continue to next middleware
 
 app.use(logger)
 
 # Auth middleware
-def auth_middleware(req):
+def auth_middleware(req, res, next):
     token = req.headers.get('Authorization')
     if not token:
         return Response().status_code(401).json({'error': 'Unauthorized'})
-    # If returns None, continues to next middleware/route
+    # If returns response, stops chain
+    # Otherwise call next() to continue
+    next()
 
 app.use(auth_middleware)
 
-# CORS middleware
-def cors_middleware(req):
-    # Add CORS headers to response
-    pass
+# Modify response
+def add_header(req, res, next):
+    res.header('X-Custom-Header', 'value')
+    next()
 
-app.use(cors_middleware)
+app.use(add_header)
 
 # Multiple middleware
 app.use(logger)
 app.use(auth_middleware)
-app.use(cors_middleware)
+app.use(add_header)
 
 @app.get('api/protected')
 def protected(req):
     return {'data': 'secret'}
 ```
 
+Middleware signature: `def middleware(req, res, next)`
+- `req` - Request object
+- `res` - Response object (can modify headers, etc)
+- `next` - Function to call next middleware
+
+Return `Response()` to stop chain, or call `next()` to continue.
+
 ## 🗄️ Prisma-like ORM
 
 Shanks provides a modern, Prisma-inspired ORM syntax on top of Django ORM.
+
+### SORM - Super Simple JSON Syntax
+
+Use `SORM` (Shanks ORM) with JSON-like syntax - JavaScript types!
+
+```python
+from SORM import table
+
+# Define model like JSON - JavaScript types!
+Category = table("Category", {
+    "name": "string:100:unique",      # string = CharField
+    "slug": "slug:unique",
+    "description": "text:blank",
+    "views": "number",                 # number = IntegerField
+    "active": "boolean",               # boolean = BooleanField
+    "created_at": "date:auto_now_add"  # date = DateTimeField
+})
+
+# With relations
+Post = table("Post", {
+    "title": "string:200",
+    "content": "text",
+    "published": "boolean",
+    "author": {"type": "relation", "model": "auth.User"},
+    "tags": {"type": "many", "model": "app.Tag"},
+    "created_at": "date:auto_now_add"
+})
+```
+
+JavaScript-like types:
+- `string` - Text (CharField)
+- `number` - Integer (IntegerField)
+- `boolean` - True/False (BooleanField)
+- `date` - DateTime (DateTimeField)
+
+Additional types:
+- `text` - Long text (TextField)
+- `float` - Decimal numbers
+- `email`, `url`, `slug`, `json`
+
+Field syntax: `"type:max_length:options"`
+- `"string:100"` - CharField with max_length=100
+- `"string:100:unique"` - CharField with max_length=100, unique=True
+- `"text:blank"` - TextField with blank=True
+- `"date:auto_now_add"` - DateTimeField with auto_now_add=True
+- `"number"` - IntegerField
+- `"boolean"` - BooleanField
+
+Relations:
+- `{"type": "relation", "model": "app.Model"}` - ForeignKey
+- `{"type": "many", "model": "app.Model"}` - ManyToManyField
+
+That's it! No CharField, TextField, ForeignKey imports needed.
 
 ### Define Models
 
@@ -574,6 +663,35 @@ def get_data(req):
 ## 📚 Swagger/OpenAPI Documentation
 
 ```python
+from shanks import App, swagger
+
+app = App()
+
+# Enable Swagger UI - Middleware style!
+app.use(swagger(
+    title="My API",
+    version="1.0.0",
+    description="Complete API documentation"
+))
+
+# All routes automatically documented!
+@app.get('api/users')
+def get_users(req):
+    return {'users': []}
+
+@app.post('api/users')
+def create_user(req):
+    data = req.body
+    return {'created': True}
+
+# Visit: http://localhost:8000/docs
+```
+
+That's it! All endpoints are automatically included in Swagger UI.
+
+### Legacy Style (Still Supported)
+
+```python
 from shanks import App, SwaggerUI
 
 app = App()
@@ -585,7 +703,7 @@ SwaggerUI.enable(app,
     description="Complete API documentation"
 )
 
-# Document routes
+# Document routes with decorator (optional)
 @app.get('api/users/<int:user_id>')
 @SwaggerUI.doc(
     summary="Get user by ID",
@@ -1709,6 +1827,67 @@ SwaggerUI.enable(app,
     responses={...}
 )
 ```
+
+### Built-in Caching
+
+Shanks includes automatic caching for GET requests - **10x faster responses** with zero configuration!
+
+```python
+from shanks import App, auto_cache, smart_cache_invalidation
+
+app = App()
+
+# Enable auto-caching (enabled by default in new projects)
+app.use(auto_cache)  # Auto-cache all GET requests for 5 minutes
+
+# Smart cache invalidation (enabled by default)
+app.use(smart_cache_invalidation)  # Auto-clear cache on POST/PUT/DELETE
+```
+
+**How it works:**
+1. First GET request → Fetches from database, caches result
+2. Subsequent GET requests → Served from cache (10x faster!)
+3. POST/PUT/DELETE → Automatically invalidates related cache
+4. Next GET request → Fresh data fetched and cached
+
+**Custom cache TTL:**
+```python
+from shanks import cache
+
+@app.get("api/posts")
+@cache(ttl=600)  # Cache for 10 minutes
+def list_posts(req):
+    return {"posts": [...]}
+
+@app.get("api/stats")
+@cache(ttl=3600)  # Cache for 1 hour
+def get_stats(req):
+    return {"stats": {...}}
+```
+
+**Manual cache control:**
+```python
+from shanks import invalidate_cache, get_cache
+
+# Clear all cache
+invalidate_cache()
+
+# Clear specific pattern
+invalidate_cache("/api/posts")
+
+# Direct cache access
+cache = get_cache()
+cache.set("key", "value", ttl=300)
+value = cache.get("key")
+cache.delete("key")
+```
+
+**Benefits:**
+- ⚡ 10x faster response times
+- 🔄 Automatic - no code changes needed
+- 🧠 Smart invalidation on writes
+- 💾 Memory efficient with TTL
+- 🎯 Pattern-based invalidation
 
 ### Utilities
 

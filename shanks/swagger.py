@@ -228,3 +228,40 @@ def enable_swagger(
         enable_swagger(app, title="My API")
     """
     SwaggerUI.enable(app, title, version, description, docs_url)
+
+
+def swagger(
+    title: str = "API Documentation",
+    version: str = "1.0.0",
+    description: str = "",
+    docs_url: str = "docs",
+):
+    """
+    Middleware-style Swagger UI setup
+
+    Usage:
+        from shanks import App, swagger
+
+        app = App()
+        app.use(swagger(title="My API", version="1.0.0"))
+
+        @app.get('api/users')
+        def get_users(req):
+            return {'users': []}
+    """
+
+    def middleware(req, res, next):
+        # This is called once during app initialization
+        # The actual Swagger setup happens when the middleware is added
+        next()
+
+    # Store swagger config on the middleware function
+    middleware._swagger_config = {
+        "title": title,
+        "version": version,
+        "description": description,
+        "docs_url": docs_url,
+    }
+    middleware._is_swagger = True
+
+    return middleware

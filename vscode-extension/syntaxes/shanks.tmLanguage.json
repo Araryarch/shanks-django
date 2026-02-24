@@ -1,0 +1,143 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Shanks Django",
+  "scopeName": "source.python.shanks",
+  "patterns": [
+    {
+      "include": "source.python"
+    },
+    {
+      "include": "#shanks-imports"
+    },
+    {
+      "include": "#shanks-decorators"
+    },
+    {
+      "include": "#shanks-classes"
+    },
+    {
+      "include": "#sorm-functions"
+    },
+    {
+      "include": "#shanks-methods"
+    }
+  ],
+  "repository": {
+    "shanks-imports": {
+      "patterns": [
+        {
+          "match": "\\b(from)\\s+(shanks|SORM)\\s+(import)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.control.import.python"
+            },
+            "2": {
+              "name": "entity.name.namespace.shanks"
+            },
+            "3": {
+              "name": "keyword.control.import.python"
+            }
+          }
+        },
+        {
+          "match": "\\b(import)\\s+(shanks|SORM)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.control.import.python"
+            },
+            "2": {
+              "name": "entity.name.namespace.shanks"
+            }
+          }
+        }
+      ]
+    },
+    "shanks-decorators": {
+      "patterns": [
+        {
+          "match": "@(app|router)\\.(get|post|put|delete|patch|use)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.shanks"
+            },
+            "2": {
+              "name": "entity.name.function.decorator.shanks"
+            }
+          }
+        },
+        {
+          "match": "@SwaggerUI\\.(doc|enable)\\b",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.decorator.shanks"
+            }
+          }
+        }
+      ]
+    },
+    "shanks-classes": {
+      "patterns": [
+        {
+          "match": "\\b(App|Response|CORS|SwaggerUI|MongoDB|Redis|DatabaseConfig)\\b",
+          "name": "support.class.shanks"
+        },
+        {
+          "match": "\\b(Model|User|Schema)\\b",
+          "name": "support.class.sorm"
+        },
+        {
+          "match": "\\b(CharField|TextField|IntegerField|FloatField|BooleanField|DateField|DateTimeField|EmailField|URLField|SlugField|JSONField)\\b",
+          "name": "support.type.sorm.field"
+        },
+        {
+          "match": "\\b(ForeignKey|ManyToManyField|OneToOneField)\\b",
+          "name": "support.type.sorm.relation"
+        },
+        {
+          "match": "\\b(CASCADE|SET_NULL|PROTECT|SET_DEFAULT)\\b",
+          "name": "constant.language.sorm"
+        }
+      ]
+    },
+    "sorm-functions": {
+      "patterns": [
+        {
+          "match": "\\b(table|model)\\s*(?=\\()",
+          "name": "entity.name.function.sorm"
+        },
+        {
+          "match": "\\b(authenticate|slugify)\\s*(?=\\()",
+          "name": "entity.name.function.shanks"
+        }
+      ]
+    },
+    "shanks-methods": {
+      "patterns": [
+        {
+          "match": "\\.(find_many|find_first|find_unique|create|update|delete_many|count|update_self|delete_self)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.sorm.query"
+            }
+          }
+        },
+        {
+          "match": "\\.(json|status_code|header|cookie|redirect|render|file)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.shanks.response"
+            }
+          }
+        },
+        {
+          "match": "\\.(get_urls|group|include|use|enable|connect)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.shanks.app"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

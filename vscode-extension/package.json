@@ -2,7 +2,7 @@
   "name": "shanks-django",
   "displayName": "Shanks Django",
   "description": "Snippets and syntax highlighting for Shanks Django framework",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "publisher": "Ararya",
   "icon": "images/icon.png",
   "engines": {
@@ -30,9 +30,23 @@
     "languages": [
       {
         "id": "python",
-        "extensions": [
-          ".py"
-        ]
+        "extensions": [".py"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "python",
+        "scopeName": "source.python.shanks",
+        "path": "./syntaxes/shanks.tmLanguage.json",
+        "injectTo": ["source.python"]
+      }
+    ],
+    "themes": [
+      {
+        "label": "Shanks Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/shanks-dark.json"
       }
     ]
   },

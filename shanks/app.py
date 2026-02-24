@@ -16,7 +16,21 @@ class App:
 
     def use(self, middleware: Callable):
         """Add middleware to the app"""
-        self.middlewares.append(middleware)
+        # Check if it's a swagger middleware
+        if hasattr(middleware, "_is_swagger") and middleware._is_swagger:
+            # Enable Swagger with the config
+            from .swagger import SwaggerUI
+
+            config = middleware._swagger_config
+            SwaggerUI.enable(
+                self,
+                title=config["title"],
+                version=config["version"],
+                description=config["description"],
+                docs_url=config["docs_url"],
+            )
+        else:
+            self.middlewares.append(middleware)
         return self
 
     def _create_view(self, handler: Callable, method: str):
@@ -26,25 +40,70 @@ class App:
         def view(request, *args, **kwargs):
             # Wrap Django request
             app_request = Request(request)
+            app_response = Response()
 
             # Store reference for CORS
             request._shanks_request = app_request
 
-            # Run middlewares
-            for middleware in self.middlewares:
-                result = middleware(app_request)
-                if result:
+            # Middleware chain
+            middleware_index = [0]
+            handler_called = [False]
+
+            def next_middleware():
+                """Call next middleware in chain"""
+                if middleware_index[0] < len(self.middlewares):
+                    current = self.middlewares[middleware_index[0]]
+                    middleware_index[0] += 1
+
+                    # Call middleware with (req, res, next)
+                    import inspect
+
+                    sig = inspect.signature(current)
+                    param_count = len(sig.parameters)
+
+                    if param_count == 3:
+                        # Express.js style: (req, res, next)
+                        result = current(app_request, app_response, next_middleware)
+                    elif param_count == 1:
+                        # Legacy style: (req)
+                        result = current(app_request)
+                        if not result:
+                            next_middleware()
+                    else:
+                        # Default: call with req
+                        result = current(app_request)
+                        if not result:
+                            next_middleware()
+
                     return result
+                else:
+                    # All middlewares done, call handler
+                    if not handler_called[0]:
+                        handler_called[0] = True
+                        return handler(app_request, *args, **kwargs)
 
-            # Call handler
-            response = handler(app_request, *args, **kwargs)
+            # Start middleware chain
+            result = next_middleware()
 
-            # Handle response
-            if isinstance(response, Response):
-                return response.to_django_response(request)
-            elif isinstance(response, dict):
-                return JsonResponse(response)
-            return response
+            # If middleware returned a response, use it
+            if result:
+                if isinstance(result, Response):
+                    return result.to_django_response(request)
+                elif isinstance(result, dict):
+                    return JsonResponse(result)
+                return result
+
+            # Otherwise use handler response
+            if handler_called[0]:
+                response = handler(app_request, *args, **kwargs)
+                if isinstance(response, Response):
+                    return response.to_django_response(request)
+                elif isinstance(response, dict):
+                    return JsonResponse(response)
+                return response
+
+            # Fallback
+            return JsonResponse({"error": "No response"}, status=500)
 
         return view
 

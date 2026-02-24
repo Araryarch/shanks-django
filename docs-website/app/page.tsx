@@ -1,17 +1,22 @@
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen">
       {/* Header */}
-      <nav className="border-b border-neutral-900">
+      <nav className="border-b border-border/40 sticky top-0 glass z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-sm font-medium tracking-tight">SHANKS</Link>
-          <div className="flex gap-6 text-xs">
-            <Link href="/docs" className="text-neutral-500 hover:text-white transition">
-              Documentation
+          <Link href="/" className="text-sm font-semibold tracking-tight">
+            SHANKS
+          </Link>
+          <div className="flex gap-6 text-sm">
+            <Link href="/docs" className="text-muted-foreground hover:text-foreground transition">
+              Docs
             </Link>
-            <a href="https://github.com" className="text-neutral-500 hover:text-white transition">
+            <a href="https://github.com" className="text-muted-foreground hover:text-foreground transition">
               GitHub
             </a>
           </div>
@@ -19,118 +24,140 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-24">
+      <div className="max-w-7xl mx-auto px-6 pt-32 pb-24 animate-in">
         <div className="max-w-3xl">
-          <div className="inline-block px-3 py-1 mb-6 text-[10px] tracking-widest bg-red-600/10 text-red-500 border border-red-600/20">
-            DJANGO FRAMEWORK
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 text-xs font-medium bg-muted/50 border border-border/50 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse"></div>
+            Django Framework
           </div>
-          <h1 className="text-6xl font-light tracking-tight mb-6 leading-[1.1]">
+          <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1] gradient-text">
             Express.js-like<br />routing for Django
           </h1>
-          <p className="text-lg text-neutral-500 mb-10 leading-relaxed font-light">
-            No urls.py. No complexity. Just clean, simple routing with Prisma-like ORM.
+          <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl">
+            No urls.py. No complexity. Just clean, simple routing with Prisma-like ORM and built-in caching. 10x faster out of the box.
           </p>
           <div className="flex gap-3">
-            <Link 
-              href="/docs/getting-started"
-              className="px-6 py-3 bg-white text-black text-xs font-medium hover:bg-neutral-200 transition"
-            >
-              Get Started
-            </Link>
-            <Link 
-              href="/docs"
-              className="px-6 py-3 border border-neutral-800 text-xs font-medium hover:border-neutral-700 hover:bg-neutral-950 transition"
-            >
-              Documentation
-            </Link>
+            <Button asChild size="lg">
+              <Link href="/docs/getting-started">
+                Get Started →
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/docs">
+                Documentation
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Code Example */}
       <div className="max-w-7xl mx-auto px-6 pb-24">
-        <div className="max-w-3xl border border-neutral-900 bg-neutral-950/50">
-          <div className="border-b border-neutral-900 px-4 py-2 flex items-center gap-2">
-            <div className="w-3 h-3 border border-neutral-800"></div>
-            <div className="text-[10px] text-neutral-600 tracking-wider">app/routes/__init__.py</div>
-          </div>
-          <pre className="p-6 overflow-x-auto text-[13px] leading-relaxed">
-            <code>
-              <span className="text-red-500">from</span> <span className="text-white">shanks</span> <span className="text-red-500">import</span> <span className="text-white">App</span>{'\n\n'}
-              <span className="text-neutral-600">app = App()</span>{'\n\n'}
-              <span className="text-red-500">@app.get</span><span className="text-neutral-500">(</span><span className="text-neutral-400">"api/posts"</span><span className="text-neutral-500">)</span>{'\n'}
-              <span className="text-red-500">def</span> <span className="text-white">list_posts</span><span className="text-neutral-500">(</span><span className="text-neutral-600">req</span><span className="text-neutral-500">)</span><span className="text-neutral-500">:</span>{'\n'}
-              {'    '}<span className="text-red-500">return</span> <span className="text-neutral-500">{'{'}</span><span className="text-neutral-400">"posts"</span><span className="text-neutral-500">:</span> <span className="text-neutral-500">[]{'}'}</span>{'\n\n'}
-              <span className="text-neutral-600">urlpatterns = app.get_urls()</span>
-            </code>
-          </pre>
-        </div>
+        <Card className="max-w-3xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/20"></div>
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/20"></div>
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/20"></div>
+              </div>
+              <CardDescription className="text-xs">internal/routes/__init__.py</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <pre className="text-sm leading-relaxed border-0 p-0 bg-transparent">
+              <code>
+                <span className="text-muted-foreground">from</span> <span className="text-foreground">shanks</span> <span className="text-muted-foreground">import</span> <span className="text-foreground">App, auto_cache</span>{'\n\n'}
+                <span className="text-muted-foreground/70">app = App()</span>{'\n'}
+                <span className="text-muted-foreground/70">app.use(auto_cache)  </span><span className="text-muted-foreground/40"># 10x faster!</span>{'\n\n'}
+                <span className="text-muted-foreground">@app.get</span><span className="text-muted-foreground/70">(</span><span className="text-foreground/80">"api/posts"</span><span className="text-muted-foreground/70">)</span>{'\n'}
+                <span className="text-muted-foreground">def</span> <span className="text-foreground">list_posts</span><span className="text-muted-foreground/70">(req):</span>{'\n'}
+                {'    '}<span className="text-muted-foreground">return</span> <span className="text-muted-foreground/70">{'{'}</span><span className="text-foreground/80">"posts"</span><span className="text-muted-foreground/70">: []{'}'}</span>
+              </code>
+            </pre>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Features */}
-      <div className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
-        <div className="grid md:grid-cols-3 gap-12">
-          <div>
-            <div className="text-[10px] text-red-500 mb-3 tracking-widest">ROUTING</div>
-            <h3 className="text-base font-medium mb-2">Simple & Clean</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Express.js-like routing with grouping. No more Django urls.py complexity.
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto px-6 py-24">
+        <Separator className="mb-24" />
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="hover:border-foreground/20 transition-colors">
+            <CardHeader>
+              <div className="text-xs text-muted-foreground mb-3 font-semibold tracking-wider">ROUTING</div>
+              <CardTitle className="text-lg">Simple & Clean</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="leading-relaxed">
+                Express.js-like routing with grouping. No more Django urls.py complexity.
+              </CardDescription>
+            </CardContent>
+          </Card>
 
-          <div>
-            <div className="text-[10px] text-red-500 mb-3 tracking-widest">DATABASE</div>
-            <h3 className="text-base font-medium mb-2">Prisma-like ORM</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Clean ORM syntax with find_many(), find_unique(), create() and more.
-            </p>
-          </div>
+          <Card className="border-foreground/20 bg-muted/30 hover:border-foreground/30 transition-colors">
+            <CardHeader>
+              <div className="text-xs text-foreground mb-3 font-semibold tracking-wider">CACHING</div>
+              <CardTitle className="text-lg">10x Faster</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="leading-relaxed">
+                Built-in auto-caching for GET requests. Zero configuration, instant performance boost.
+              </CardDescription>
+            </CardContent>
+          </Card>
 
-          <div>
-            <div className="text-[10px] text-red-500 mb-3 tracking-widest">DOCUMENTATION</div>
-            <h3 className="text-base font-medium mb-2">Auto Swagger</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Automatic API documentation with Swagger UI. Zero configuration needed.
-            </p>
-          </div>
+          <Card className="hover:border-foreground/20 transition-colors">
+            <CardHeader>
+              <div className="text-xs text-muted-foreground mb-3 font-semibold tracking-wider">DATABASE</div>
+              <CardTitle className="text-lg">Prisma-like ORM</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="leading-relaxed">
+                Clean ORM syntax with find_many(), find_unique(), create() and more.
+              </CardDescription>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Why Section */}
-      <div className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
-        <h2 className="text-2xl font-light tracking-tight mb-16">Why Shanks?</h2>
-        <div className="grid md:grid-cols-2 gap-x-12 gap-y-8 max-w-4xl">
-          <div className="border-l border-red-600 pl-6">
-            <h3 className="text-sm font-medium mb-2">No urls.py</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Routes are auto-configured. Just export urlpatterns from your routes module.
-            </p>
-          </div>
-          <div className="border-l border-neutral-800 pl-6">
-            <h3 className="text-sm font-medium mb-2">Route Grouping</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Group routes with prefixes like Gin/Express. Clean and organized.
-            </p>
-          </div>
-          <div className="border-l border-neutral-800 pl-6">
-            <h3 className="text-sm font-medium mb-2">Built-in Auth</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              JWT authentication middleware included. Secure by default.
-            </p>
-          </div>
-          <div className="border-l border-neutral-800 pl-6">
-            <h3 className="text-sm font-medium mb-2">Database Agnostic</h3>
-            <p className="text-sm text-neutral-500 leading-relaxed font-light">
-              Works with PostgreSQL, MySQL, SQLite. Easy database URL configuration.
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto px-6 py-24">
+        <Separator className="mb-24" />
+        <h2 className="text-3xl font-bold tracking-tight mb-16">Why Shanks?</h2>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl">
+          {[
+            {
+              title: "Built-in Caching",
+              description: "Auto-cache GET requests with smart invalidation. 10x faster responses out of the box."
+            },
+            {
+              title: "No urls.py",
+              description: "Routes are auto-configured. Just export urlpatterns from your routes module."
+            },
+            {
+              title: "CLI Generator",
+              description: "Generate CRUD & Auth endpoints with one command. Go-like project architecture."
+            },
+            {
+              title: "Express.js Middleware",
+              description: "Familiar middleware pattern with req, res, next. Easy to understand and use."
+            }
+          ].map((item, i) => (
+            <div key={i} className="border-l-2 border-border pl-6 hover:border-foreground/50 transition-colors">
+              <h3 className="text-base font-semibold mb-2">{item.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-neutral-900 mt-24">
+      <footer className="border-t border-border/40 mt-24">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="text-[10px] text-neutral-700 tracking-wider">
+          <div className="text-xs text-muted-foreground">
             © 2024 SHANKS DJANGO. MIT LICENSE.
           </div>
         </div>

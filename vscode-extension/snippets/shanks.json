@@ -227,7 +227,7 @@
   "Shanks Model": {
     "prefix": "shanks-model",
     "body": [
-      "from shanks import Model, CharField, TextField, DateTimeField, ForeignKey, CASCADE",
+      "from SORM import Model, CharField, TextField, DateTimeField, ForeignKey, CASCADE",
       "",
       "class ${1:ModelName}(Model):",
       "    ${2:name} = CharField(max_length=${3:100})",
@@ -241,7 +241,53 @@
       "    def __str__(self):",
       "        return self.${2:name}"
     ],
-    "description": "Create Shanks model"
+    "description": "Create Shanks model with SORM"
+  },
+  "SORM Model": {
+    "prefix": "sorm-model",
+    "body": [
+      "from SORM import table",
+      "",
+      "${1:Post} = table(",
+      "    \"${1:Post}\",",
+      "    {",
+      "        \"${2:title}\": \"${3:string:200}\",",
+      "        \"${4:content}\": \"${5:text}\",",
+      "        \"${6:created_at}\": \"${7:datetime:auto_now_add}\",",
+      "    },",
+      ")"
+    ],
+    "description": "Create model with SORM table (JSON syntax)"
+  },
+  "SORM Table": {
+    "prefix": "sorm-table",
+    "body": [
+      "from SORM import table",
+      "",
+      "${1:Model} = table(\"${1:Model}\", {",
+      "    \"${2:name}\": \"${3:string:100}\",",
+      "    \"${4:description}\": \"${5:text:blank}\",",
+      "    \"${6:created_at}\": \"datetime:auto_now_add\",",
+      "})"
+    ],
+    "description": "Create table with JSON-like syntax"
+  },
+  "SORM User": {
+    "prefix": "sorm-user",
+    "body": [
+      "from SORM import User, authenticate",
+      "",
+      "# Create user",
+      "user = User.create(",
+      "    username='${1:username}',",
+      "    email='${2:email}',",
+      "    password='${3:password}'",
+      ")",
+      "",
+      "# Authenticate",
+      "user = authenticate(username='${1:username}', password='${3:password}')"
+    ],
+    "description": "Use SORM User model"
   },
   "Shanks Find Many": {
     "prefix": "shanks-find-many",
@@ -316,7 +362,7 @@
   "Shanks User Create": {
     "prefix": "shanks-user-create",
     "body": [
-      "from shanks import User",
+      "from SORM import User",
       "",
       "user = User.create(",
       "    username='${1:username}',",
@@ -324,19 +370,19 @@
       "    password='${3:password}'",
       ")"
     ],
-    "description": "Create user with Shanks"
+    "description": "Create user with SORM"
   },
   "Shanks Authenticate": {
     "prefix": "shanks-authenticate",
     "body": [
-      "from shanks import authenticate",
+      "from SORM import authenticate",
       "",
       "user = authenticate(",
       "    username='${1:username}',",
       "    password='${2:password}'",
       ")"
     ],
-    "description": "Authenticate user with Shanks"
+    "description": "Authenticate user with SORM"
   },
   "Shanks JSON Model": {
     "prefix": "shanks-json-model",

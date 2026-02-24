@@ -21,17 +21,28 @@ class Schema:
                 "created_at": "datetime"
             })
         """
-        attrs = {"__module__": __name__}
+        import inspect
 
-        # Add Meta class if options provided
+        # Get the calling module to set app_label correctly
+        frame = inspect.currentframe().f_back
+        module = inspect.getmodule(frame)
+        module_name = module.__name__ if module else "app"
+
+        # Extract app name from module path (e.g., "entity.products" -> "entity")
+        app_label = module_name.split(".")[0] if "." in module_name else module_name
+
+        attrs = {"__module__": module_name}
+
+        # Add Meta class
+        meta_attrs = {"app_label": app_label}
+
         if options:
-            meta_attrs = {}
             if "table" in options:
                 meta_attrs["db_table"] = options["table"]
             if "ordering" in options:
                 meta_attrs["ordering"] = options["ordering"]
-            if meta_attrs:
-                attrs["Meta"] = type("Meta", (), meta_attrs)
+
+        attrs["Meta"] = type("Meta", (), meta_attrs)
 
         # Convert JSON-like fields to Django fields
         for field_name, field_def in fields.items():
@@ -50,7 +61,7 @@ class Schema:
         """Convert JSON field definition to Django field"""
         # Simple string type
         if isinstance(field_def, str):
-            return Schema._get_field_by_type(field_def)
+            return Schema._parse_field_string(field_def)
 
         # Dict with options
         if isinstance(field_def, dict):
@@ -74,15 +85,69 @@ class Schema:
         return field_def
 
     @staticmethod
+    def _parse_field_string(field_str):
+        """
+        Parse field string like 'string:100:unique' or 'number:auto_now_add'
+        JavaScript-like types: string, number, boolean, date
+        """
+        parts = field_str.split(":")
+        field_type = parts[0]
+        options = {}
+
+        # Parse options from string
+        for part in parts[1:]:
+            if part.isdigit():
+                options["max_length"] = int(part)
+            elif part == "unique":
+                options["unique"] = True
+            elif part == "blank":
+                options["blank"] = True
+            elif part == "null":
+                options["null"] = True
+            elif part == "auto_now":
+                options["auto_now"] = True
+            elif part == "auto_now_add":
+                options["auto_now_add"] = True
+
+        # Get field class
+        field_class = Schema._get_field_class_by_type(field_type)
+
+        # Create field instance
+        if field_class:
+            return field_class(**options)
+
+        return models.CharField(max_length=255)
+
+    @staticmethod
+    def _get_field_class_by_type(field_type):
+        """Get Django field class by JavaScript-like type string"""
+        type_map = {
+            # JavaScript-like types
+            "string": models.CharField,
+            "number": models.IntegerField,
+            "boolean": models.BooleanField,
+            "date": models.DateTimeField,
+            # Additional types
+            "text": models.TextField,
+            "float": models.FloatField,
+            "email": models.EmailField,
+            "url": models.URLField,
+            "slug": models.SlugField,
+            "json": models.JSONField,
+        }
+        return type_map.get(field_type)
+
+    @staticmethod
     def _get_field_by_type(field_type):
-        """Get Django field class by type string"""
+        """Get Django field class by type string (legacy)"""
         type_map = {
             "string": models.CharField(max_length=255),
             "text": models.TextField(),
+            "number": models.IntegerField(),
             "integer": models.IntegerField(),
             "float": models.FloatField(),
             "boolean": models.BooleanField(default=False),
-            "date": models.DateField(),
+            "date": models.DateTimeField(auto_now_add=True),
             "datetime": models.DateTimeField(auto_now_add=True),
             "email": models.EmailField(),
             "url": models.URLField(),

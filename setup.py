@@ -12,7 +12,11 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Ararya/shanks-django",
-    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*", "example-project", "docs-website", "vscode-extension"]),
+    include_package_data=True,
+    package_data={
+        "shanks": ["templates/*.html"],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

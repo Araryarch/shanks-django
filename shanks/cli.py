@@ -112,7 +112,7 @@ def run_server():
 
 
 def create_project():
-    """Create a new Shanks Django project"""
+    """Create a new Shanks Django project with Go-like architecture"""
     if len(sys.argv) < 3:
         print("Usage: shanks new <project_name>")
         sys.exit(1)
@@ -122,49 +122,75 @@ def create_project():
 
     # Create Django project
     try:
-        subprocess.run(["django-admin", "startproject", project_name], check=True)
-    except FileNotFoundError:
-        print("❌ django-admin not found. Installing Django...")
+        subprocess.run(
+            [sys.executable, "-m", "django", "startproject", project_name], check=True
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        print("❌ Django not found. Installing Django...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "django"])
-        subprocess.run(["django-admin", "startproject", project_name], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "django", "startproject", project_name], check=True
+        )
 
     project_dir = Path(project_name)
     config_dir = project_dir / project_name
 
-    # Create app directory
-    app_dir = project_dir / "app"
-    app_dir.mkdir(exist_ok=True)
-    (app_dir / "__init__.py").write_text("")
+    # Create Go-like architecture
+    internal_dir = project_dir / "internal"
+    internal_dir.mkdir(exist_ok=True)
+    (internal_dir / "__init__.py").write_text("")
 
-    # Create routes directory
-    routes_dir = app_dir / "routes"
-    routes_dir.mkdir(exist_ok=True)
+    # Create internal subdirectories
+    for subdir in ["controller", "repository", "service", "middleware", "routes"]:
+        dir_path = internal_dir / subdir
+        dir_path.mkdir(exist_ok=True)
+        (dir_path / "__init__.py").write_text("")
 
-    # Create routes/__init__.py with example
-    routes_content = '''"""API routes"""
-from shanks import App
+    # Create other directories
+    for dir_name in ["dto", "entity", "config", "utils"]:
+        dir_path = project_dir / dir_name
+        dir_path.mkdir(exist_ok=True)
+        (dir_path / "__init__.py").write_text("")
+
+    # Create routes with example
+    routes_content = '''"""API Routes"""
+from shanks import App, swagger, auto_cache, smart_cache_invalidation
 
 app = App()
 
+# Enable built-in caching - auto-cache GET requests!
+app.use(auto_cache)
 
-@app.get("api/hello")
-def hello(req):
-    """Hello World endpoint"""
-    return {"message": "Hello from Shanks Django!"}
+# Smart cache invalidation - auto-clear cache on POST/PUT/DELETE
+app.use(smart_cache_invalidation)
+
+# Enable Swagger - applies to all endpoints!
+app.use(swagger(title="{project_name} API", version="1.0.0"))
 
 
 @app.get("api/health")
 def health(req):
-    """Health check endpoint"""
-    return {"status": "ok", "framework": "shanks-django"}
+    """Health check"""
+    return {{"status": "ok", "service": "{project_name}"}}
 
 
-# Export URL patterns - No urls.py needed!
+# Export URL patterns
 urlpatterns = app.get_urls()
-'''
-    (routes_dir / "__init__.py").write_text(routes_content)
+'''.format(project_name=project_name)
+    (internal_dir / "routes" / "__init__.py").write_text(routes_content)
 
-    # Update settings.py with simplified config
+    # Create example middleware
+    middleware_content = '''"""Middleware"""
+
+
+def logger(req, res, next):
+    """Log all requests - Express.js style"""
+    print(f"[{{req.method}}] {{req.path}}")
+    next()
+'''
+    (internal_dir / "middleware" / "logger.py").write_text(middleware_content)
+
+    # Update settings.py
     settings_content = '''"""Shanks Django Settings"""
 
 from shanks import (
@@ -188,13 +214,13 @@ DEBUG = get_debug()
 ALLOWED_HOSTS = get_allowed_hosts()
 
 # Apps
-INSTALLED_APPS = get_installed_apps(["app"])
+INSTALLED_APPS = get_installed_apps(["internal", "entity", "dto"])
 
 # Middleware
 MIDDLEWARE = get_middleware()
 
 # Routing
-ROOT_URLCONF = "app.routes"
+ROOT_URLCONF = "internal.routes"
 
 # Templates
 TEMPLATES = get_templates()
@@ -226,7 +252,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
     (config_dir / "settings.py").write_text(settings_content)
 
     # Update wsgi.py
-    wsgi_content = '''"""WSGI - Auto-configured by Shanks"""
+    wsgi_content = '''"""WSGI"""
 
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "{project_name}.settings")
@@ -236,10 +262,40 @@ application = get_wsgi_application()
 '''.format(project_name=project_name)
     (config_dir / "wsgi.py").write_text(wsgi_content)
 
-    # Delete urls.py (not needed anymore)
+    # Delete urls.py
     urls_file = config_dir / "urls.py"
     if urls_file.exists():
         urls_file.unlink()
+
+    # Override manage.py to suppress warnings
+    manage_content = '''#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+import warnings
+
+
+def main():
+    """Run administrative tasks."""
+    # Suppress sys.prefix warnings
+    warnings.filterwarnings("ignore", category=RuntimeWarning, module="site")
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', '{project_name}.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
+'''.format(project_name=project_name)
+    (project_dir / "manage.py").write_text(manage_content)
 
     # Create .env.example
     env_example = """# Django Settings
@@ -249,17 +305,30 @@ ALLOWED_HOSTS=*
 
 # Database (optional)
 # DATABASE_URL=postgresql://user:pass@localhost/dbname
-# DATABASE_URL=mysql://user:pass@localhost/dbname
-
-# CORS (optional)
-# CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 """
     (project_dir / ".env.example").write_text(env_example)
 
     # Create README.md
     readme_content = """# {project_name}
 
-Shanks Django project - Express.js-like API framework
+Shanks Django project with Go-like architecture
+
+## Structure
+
+```
+{project_name}/
+├── internal/           # Internal application code
+│   ├── controller/    # HTTP handlers
+│   ├── repository/    # Data access layer
+│   ├── service/       # Business logic
+│   ├── middleware/    # Middleware functions
+│   └── routes/        # Route definitions
+├── entity/            # Database models
+├── dto/               # Data Transfer Objects
+├── config/            # Configuration files
+├── utils/             # Utility functions
+└── {project_name}/    # Django settings
+```
 
 ## Quick Start
 
@@ -267,81 +336,416 @@ Shanks Django project - Express.js-like API framework
 # Install dependencies
 pip install shanks-django
 
+# Copy environment file
+cp .env.example .env
+
 # Run migrations
 python manage.py migrate
 
 # Start server
-shanks run
+python manage.py runserver
 ```
 
-Visit: http://127.0.0.1:8000/api/hello
+Visit: http://127.0.0.1:8000/api/health
+Swagger: http://127.0.0.1:8000/docs
 
-## Project Structure
-
-```
-{project_name}/
-├── {project_name}/
-│   ├── settings.py    # Simplified settings
-│   ├── wsgi.py       # Minimal WSGI
-│   └── ...
-├── app/
-│   └── routes/
-│       └── __init__.py  # Your routes here
-├── manage.py
-└── .env.example
-```
-
-## Add Routes
-
-Edit `app/routes/__init__.py`:
-
-```python
-@app.get("api/users")
-def list_users(req):
-    return {{"users": []}}
-
-@app.post("api/users")
-def create_user(req):
-    data = req.body
-    return {{"created": True}}
-```
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and configure:
+## Generate CRUD
 
 ```bash
-cp .env.example .env
+shanks create posts --crud
+shanks create auth --simple
 ```
-
-## Learn More
-
-- [Shanks Documentation](https://github.com/Ararya/shanks-django)
-- [Routing Guide](https://github.com/Ararya/shanks-django#routing)
-- [ORM Guide](https://github.com/Ararya/shanks-django#orm)
 """.format(project_name=project_name)
     (project_dir / "README.md").write_text(readme_content)
 
     print(f"\n✅ Project created successfully!")
-    print(f"\n📁 Project structure:")
+    print(f"\n📁 Go-like architecture:")
     print(f"  {project_name}/")
-    print(f"  ├── {project_name}/")
-    print(f"  │   ├── settings.py    # Simplified with Shanks helpers")
-    print(f"  │   ├── wsgi.py       # Minimal WSGI")
-    print(f"  │   └── ...")
-    print(f"  ├── app/")
-    print(f"  │   └── routes/")
-    print(f"  │       └── __init__.py  # Your routes here")
-    print(f"  ├── manage.py")
-    print(f"  ├── .env.example")
-    print(f"  └── README.md")
+    print(f"  ├── internal/")
+    print(f"  │   ├── controller/    # HTTP handlers")
+    print(f"  │   ├── repository/    # Data access")
+    print(f"  │   ├── service/       # Business logic")
+    print(f"  │   ├── middleware/    # Middleware")
+    print(f"  │   └── routes/        # Routes")
+    print(f"  ├── entity/            # Models")
+    print(f"  ├── dto/               # DTOs")
+    print(f"  ├── config/            # Config")
+    print(f"  └── utils/             # Utils")
     print(f"\n🚀 Next steps:")
     print(f"  cd {project_name}")
     print(f"  cp .env.example .env")
     print(f"  python manage.py migrate")
-    print(f"  shanks run")
-    print(f"\n🌐 Then visit: http://127.0.0.1:8000/api/hello")
-    print(f"\n💡 No urls.py needed! Routes are in app/routes/__init__.py")
+    print(f"  python manage.py runserver")
+    print(f"\n🌐 Visit: http://127.0.0.1:8000/api/health")
+    print(f"\n📚 Swagger: http://127.0.0.1:8000/docs")
+
+
+def create_crud_endpoint():
+    """Create CRUD endpoint with Go-like architecture"""
+    if len(sys.argv) < 3:
+        print("Usage: shanks create <endpoint_name> --crud")
+        print("Example: shanks create posts --crud")
+        sys.exit(1)
+
+    endpoint_name = sys.argv[2]
+    model_name = endpoint_name.capitalize().rstrip("s")
+    endpoint_plural = endpoint_name.lower()
+
+    if not Path("manage.py").exists():
+        print("❌ Not in a Shanks project directory!")
+        sys.exit(1)
+
+    # Create entity (model) - use Django models directly
+    entity_dir = Path("entity")
+    entity_dir.mkdir(exist_ok=True)
+    if not (entity_dir / "__init__.py").exists():
+        (entity_dir / "__init__.py").write_text("")
+
+    entity_file = entity_dir / f"{endpoint_name}.py"
+    entity_content = f'''"""
+{model_name} Entity
+"""
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class {model_name}(models.Model):
+    """
+{model_name} model
+    """
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="{endpoint_plural}")
+
+    class Meta:
+        app_label = "entity"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    # Prisma-like methods
+    @classmethod
+    def find_many(cls, **filters):
+        return cls.objects.filter(**filters)
+
+    @classmethod
+    def find_unique(cls, **filters):
+        try:
+            return cls.objects.get(**filters)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def count(cls, **filters):
+        if filters:
+            return cls.objects.filter(**filters).count()
+        return cls.objects.count()
+
+    def update_self(self, **data):
+        for key, value in data.items():
+            setattr(self, key, value)
+        self.save()
+        return self
+
+    def delete_self(self):
+        self.delete()
+'''
+    entity_file.write_text(entity_content)
+
+    # Update entity/models.py for Django auto-discovery
+    models_file = entity_dir / "models.py"
+    if models_file.exists():
+        models_content = models_file.read_text()
+        import_line = f"from .{endpoint_name} import {model_name}"
+        if import_line not in models_content:
+            models_content += f"\n{import_line}\n"
+            models_file.write_text(models_content)
+    else:
+        models_file.write_text(f"from .{endpoint_name} import {model_name}\n")
+
+    # Create controller
+    controller_dir = Path("internal/controller")
+    controller_file = controller_dir / f"{endpoint_name}.py"
+    controller_content = f'''"""
+{model_name} Controller
+"""
+from shanks import Response
+from entity.{endpoint_name} import {model_name}
+
+
+def list_{endpoint_plural}(req):
+    """List with pagination"""
+    page = int(req.query.get("page", 1))
+    limit = int(req.query.get("limit", 10))
+    offset = (page - 1) * limit
+
+    total = {model_name}.count()
+    items = {model_name}.find_many()[offset : offset + limit]
+
+    return {{
+        "data": [
+            {{
+                "id": item.id,
+                "title": item.title,
+                "description": item.description,
+                "created_at": item.created_at.isoformat(),
+            }}
+            for item in items
+        ],
+        "pagination": {{"page": page, "limit": limit, "total": total}},
+    }}
+
+
+def get_by_id(req, id):
+    """Get by ID"""
+    item = {model_name}.find_unique(id=id)
+    if not item:
+        return Response().status_code(404).json({{"error": "Not found"}})
+    
+    return {{
+        "id": item.id,
+        "title": item.title,
+        "description": item.description,
+        "created_at": item.created_at.isoformat(),
+    }}
+
+
+def create(req):
+    """Create"""
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({{"error": "Auth required"}})
+    
+    data = req.body
+    item = {model_name}.objects.create(
+        title=data.get("title"),
+        description=data.get("description", ""),
+        created_by=req.user,
+    )
+    return Response().status_code(201).json({{"id": item.id}})
+
+
+def update(req, id):
+    """Update"""
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({{"error": "Auth required"}})
+    
+    item = {model_name}.find_unique(id=id)
+    if not item:
+        return Response().status_code(404).json({{"error": "Not found"}})
+    
+    data = req.body
+    item.update_self(
+        title=data.get("title", item.title),
+        description=data.get("description", item.description),
+    )
+    return {{"message": "Updated"}}
+
+
+def delete(req, id):
+    """Delete"""
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({{"error": "Auth required"}})
+    
+    item = {model_name}.find_unique(id=id)
+    if not item:
+        return Response().status_code(404).json({{"error": "Not found"}})
+    
+    item.delete_self()
+    return {{"message": "Deleted"}}
+'''
+    controller_file.write_text(controller_content)
+
+    # Create routes
+    routes_dir = Path("internal/routes")
+    routes_file = routes_dir / f"{endpoint_name}.py"
+    routes_content = f'''"""
+{model_name} Routes
+"""
+from shanks import App
+from internal.controller import {endpoint_name} as ctrl
+
+router = App()
+
+
+@router.get("api/{endpoint_plural}")
+def list_{endpoint_plural}(req):
+    return ctrl.list_{endpoint_plural}(req)
+
+
+@router.get("api/{endpoint_plural}/<int:id>")
+def get_{endpoint_name}(req, id):
+    return ctrl.get_by_id(req, id)
+
+
+@router.post("api/{endpoint_plural}")
+def create_{endpoint_name}(req):
+    return ctrl.create(req)
+
+
+@router.put("api/{endpoint_plural}/<int:id>")
+def update_{endpoint_name}(req, id):
+    return ctrl.update(req, id)
+
+
+@router.delete("api/{endpoint_plural}/<int:id>")
+def delete_{endpoint_name}(req, id):
+    return ctrl.delete(req, id)
+'''
+    routes_file.write_text(routes_content)
+
+    print(f"\n✅ CRUD created!")
+    print(f"\n📁 Files:")
+    print(f"  ├── entity/{endpoint_name}.py")
+    print(f"  ├── internal/controller/{endpoint_name}.py")
+    print(f"  └── internal/routes/{endpoint_name}.py")
+    print(f"\n📝 Next steps:")
+    print(f"   1. Import in internal/routes/__init__.py:")
+    print(f"      from . import {endpoint_name}")
+    print(f"      app.include({endpoint_name}.router)")
+    print(f"   2. Run migrations:")
+    print(f"      python manage.py makemigrations")
+    print(f"      python manage.py migrate")
+    print(f"\n🎯 Endpoints:")
+    print(f"  GET    /api/{endpoint_plural}")
+    print(f"  GET    /api/{endpoint_plural}/<id>")
+    print(f"  POST   /api/{endpoint_plural}")
+    print(f"  PUT    /api/{endpoint_plural}/<id>")
+    print(f"  DELETE /api/{endpoint_plural}/<id>")
+
+
+def create_auth_endpoint():
+    """Create authentication endpoints"""
+    if len(sys.argv) < 4:
+        print("Usage: shanks create auth --simple|--complete")
+        sys.exit(1)
+
+    auth_type = sys.argv[3]
+    if auth_type not in ["--simple", "--complete"]:
+        print("❌ Use --simple or --complete")
+        sys.exit(1)
+
+    if not Path("manage.py").exists():
+        print("❌ Not in a Shanks project!")
+        sys.exit(1)
+
+    routes_dir = Path("internal/routes")
+    auth_file = routes_dir / "auth.py"
+
+    if auth_type == "--simple":
+        auth_content = '''"""Auth Routes - Simple"""
+from shanks import App, Response
+from SORM import User, authenticate
+
+router = App()
+
+
+@router.post("api/auth/register")
+def register(req):
+    data = req.body
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not username or not email or not password:
+        return Response().status_code(400).json({"error": "All fields required"})
+
+    if User.find_unique(username=username):
+        return Response().status_code(400).json({"error": "Username exists"})
+
+    user = User.create(username=username, email=email, password=password)
+    return Response().status_code(201).json({"message": "Registered", "user_id": user.id})
+
+
+@router.post("api/auth/login")
+def login(req):
+    data = req.body
+    user = authenticate(username=data.get("username"), password=data.get("password"))
+    
+    if not user:
+        return Response().status_code(401).json({"error": "Invalid credentials"})
+    
+    return {"message": "Login successful", "user_id": user.id}
+
+
+@router.get("api/auth/me")
+def get_me(req):
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({"error": "Not authenticated"})
+    
+    return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
+'''
+    else:  # --complete
+        auth_content = '''"""Auth Routes - Complete"""
+from shanks import App, Response
+from SORM import User, authenticate
+
+router = App()
+
+
+@router.post("api/auth/register")
+def register(req):
+    data = req.body
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not username or not email or not password:
+        return Response().status_code(400).json({"error": "All fields required"})
+
+    if User.find_unique(username=username):
+        return Response().status_code(400).json({"error": "Username exists"})
+
+    user = User.create(username=username, email=email, password=password, is_active=False)
+    # TODO: Send verification email
+    return Response().status_code(201).json({"message": "Check email to verify"})
+
+
+@router.post("api/auth/verify")
+def verify_email(req):
+    token = req.body.get("token")
+    # TODO: Implement verification
+    return {"message": "Email verified"}
+
+
+@router.post("api/auth/login")
+def login(req):
+    data = req.body
+    user = authenticate(username=data.get("username"), password=data.get("password"))
+    
+    if not user:
+        return Response().status_code(401).json({"error": "Invalid credentials"})
+    
+    if not user.is_active:
+        return Response().status_code(403).json({"error": "Account not verified"})
+    
+    return {"message": "Login successful", "user_id": user.id}
+
+
+@router.get("api/auth/me")
+def get_me(req):
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({"error": "Not authenticated"})
+    
+    return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
+'''
+
+    auth_file.write_text(auth_content)
+
+    endpoints = ["POST /api/auth/register", "POST /api/auth/login", "GET  /api/auth/me"]
+    if auth_type == "--complete":
+        endpoints.insert(2, "POST /api/auth/verify")
+
+    print(f"\n✅ Auth created!")
+    print(f"\n📁 File: internal/routes/auth.py")
+    print(f"\n📝 Import in internal/routes/__init__.py:")
+    print(f"   from . import auth")
+    print(f"   app.include(auth.router)")
+    print(f"\n🎯 Endpoints:")
+    for e in endpoints:
+        print(f"  {e}")
 
 
 def show_help():
@@ -353,28 +757,34 @@ Usage:
     shanks <command> [options]
 
 Commands:
-    run [host:port]    Run development server with auto-reload (like nodemon)
-                       Default: 127.0.0.1:8000
-                       Examples:
-                         shanks run
-                         shanks run 8080
-                         shanks run 0.0.0.0:3000
+    run [host:port]              Run development server with auto-reload
+                                 Default: 127.0.0.1:8000
 
-    new <name>         Create a new Shanks Django project
+    new <name>                   Create a new Shanks Django project
+                                 with Go-like architecture
 
-    format             Format code with black
-    lint               Lint code with flake8
-    check              Format and lint code
+    create <endpoint> --crud     Generate CRUD endpoints with model
+                                 Creates: entity, controller, routes
+                                 Example: shanks create products --crud
 
-    help               Show this help message
+    create auth --simple         Generate simple auth endpoints
+                                 Creates: /login, /register, /me
+
+    create auth --complete       Generate complete auth endpoints
+                                 Creates: /login, /register, /verify, /me
+
+    format                       Format code with black
+    lint                         Lint code with flake8
+    check                        Format and lint code
+
+    help                         Show this help message
 
 Examples:
-    shanks run                    # Start server on 127.0.0.1:8000
-    shanks run 3000               # Start server on 127.0.0.1:3000
-    shanks run 0.0.0.0:8000       # Start server on all interfaces
-    shanks new myproject          # Create new project
-    shanks format                 # Format code
-    shanks check                  # Format and lint
+    shanks new myproject                # Create new project
+    shanks create products --crud       # Generate products CRUD
+    shanks create auth --simple         # Generate auth endpoints
+    shanks run                          # Start server
+    shanks format                       # Format code
 """
     print(help_text)
 
@@ -391,6 +801,23 @@ def main():
         run_server()
     elif command == "new":
         create_project()
+    elif command == "create":
+        # Handle create subcommands
+        if len(sys.argv) < 3:
+            print("Usage: shanks create <endpoint> --crud")
+            print("       shanks create auth --simple|--complete")
+            sys.exit(1)
+
+        subcommand = sys.argv[2]
+        if subcommand == "auth":
+            create_auth_endpoint()
+        elif "--crud" in sys.argv:
+            create_crud_endpoint()
+        else:
+            print(f"Unknown create command: {subcommand}")
+            print("Use: shanks create <endpoint> --crud")
+            print("Or:  shanks create auth --simple|--complete")
+            sys.exit(1)
     elif command == "format":
         format_code()
     elif command == "lint":

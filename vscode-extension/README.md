@@ -1,15 +1,49 @@
 # Shanks Django - VSCode Extension
 
-Snippets and syntax highlighting for Shanks Django framework.
+Snippets, syntax highlighting, and color theme for Shanks Django framework.
 
 ## Features
 
 - 🚀 Code snippets for common Shanks patterns
+- 🎨 Syntax highlighting for Shanks & SORM keywords
+- 🌈 Custom dark theme optimized for Shanks
 - 📝 IntelliSense support
-- 🎨 Syntax highlighting
 - ⚡ Quick scaffolding
 
+## Syntax Highlighting
+
+The extension provides enhanced syntax highlighting for:
+
+- **Shanks imports**: `from shanks import App`, `from SORM import table`
+- **Decorators**: `@app.get()`, `@app.post()`, `@SwaggerUI.doc()`
+- **Classes**: `App`, `Response`, `CORS`, `SwaggerUI`, `Model`, `User`
+- **SORM fields**: `CharField`, `TextField`, `ForeignKey`, etc.
+- **SORM functions**: `table()`, `model()`, `authenticate()`
+- **Query methods**: `.find_many()`, `.create()`, `.update_self()`
+- **Response methods**: `.json()`, `.status_code()`, `.cookie()`
+- **Constants**: `CASCADE`, `SET_NULL`, `PROTECT`
+
+## Color Theme
+
+The extension includes "Shanks Dark" theme with red accents:
+
+1. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+2. Type "Color Theme"
+3. Select "Shanks Dark"
+
+Features:
+- Dark background (#0d0d0d)
+- Red highlights for Shanks/SORM keywords
+- Orange for methods and functions
+- Optimized for Python with Shanks
+
 ## Snippets
+
+### SORM Models
+
+- `sorm-table` - Create model with JSON-like syntax
+- `sorm-model` - Create SORM model
+- `sorm-user` - Use SORM User model
 
 ### Basic App
 

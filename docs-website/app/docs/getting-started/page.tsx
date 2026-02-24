@@ -26,6 +26,34 @@ export default function GettingStartedPage() {
       </Section>
 
       <Section>
+        <H2>Generate CRUD Endpoints (Quick!)</H2>
+        <P>
+          Shanks can generate complete CRUD endpoints with models automatically:
+        </P>
+        <SimpleCodeBlock>
+          shanks create posts --crud
+        </SimpleCodeBlock>
+        <P>
+          This creates <InlineCode>app/models/posts.py</InlineCode> and{' '}
+          <InlineCode>app/routes/posts.py</InlineCode> with:
+        </P>
+        <ul className="list-disc list-inside space-y-1 text-neutral-300 ml-4 mt-2">
+          <li>List with pagination</li>
+          <li>Get by ID</li>
+          <li>Create, Update, Delete</li>
+          <li>Auth checks</li>
+        </ul>
+      </Section>
+
+      <Section>
+        <H2>Generate Auth Endpoints</H2>
+        <P>Simple auth (login, register, me):</P>
+        <SimpleCodeBlock>shanks create auth --simple</SimpleCodeBlock>
+        <P>Complete auth (with email verification):</P>
+        <SimpleCodeBlock>shanks create auth --complete</SimpleCodeBlock>
+      </Section>
+
+      <Section>
         <H2>Your First Route</H2>
         <P>
           Create a file <InlineCode>app/routes/__init__.py</InlineCode>:
