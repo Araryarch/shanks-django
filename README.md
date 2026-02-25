@@ -15,15 +15,15 @@ pip install shanks-django
 
 ## ✨ Features
 
-- 🎯 **Express.js-like syntax** - Familiar routing
-- 🔥 **Prisma-like ORM** - Modern database queries
-- ⚡ **Auto-caching enabled** - GET requests cached by default (10x faster!)
-- 🔄 **Smart cache invalidation** - Auto-clear on POST/PUT/DELETE
-- 🎨 **Route grouping** - Organize routes like Gin (Go)
-- 🚀 **Auto-type detection** - No need to specify `<int:id>`
-- 📚 **Swagger built-in** - Auto-generated API docs
-- 🛠️ **CLI generators** - Generate CRUD & Auth instantly
-- 🗄️ **SORM CLI** - Prisma-like database management
+-  **Express.js-like syntax** - Familiar routing
+-  **Prisma-like ORM** - Modern database queries
+-  **Auto-caching enabled** - GET requests cached by default (10x faster!)
+-  **Smart cache invalidation** - Auto-clear on POST/PUT/DELETE
+-  **Route grouping** - Organize routes like Gin (Go)
+-  **Auto-type detection** - No need to specify `<int:id>`
+-  **Swagger built-in** - Auto-generated API docs
+-  **CLI generators** - Generate CRUD & Auth instantly
+-  **SORM CLI** - Prisma-like database management
 
 ## 🚀 Quick Start
 

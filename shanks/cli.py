@@ -102,33 +102,36 @@ def run_server():
     try:
         # Suppress Django startup messages
         env = os.environ.copy()
-        env['PYTHONUNBUFFERED'] = '1'
-        
+        env["PYTHONUNBUFFERED"] = "1"
+
         process = subprocess.Popen(
             [sys.executable, "manage.py", "runserver", f"{host}:{port}", "--noreload"],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1
+            bufsize=1,
         )
-        
+
         # Filter output to only show relevant info
         for line in process.stdout:
             # Skip Django version and startup messages
-            if any(skip in line for skip in [
-                "Watching for file changes",
-                "Performing system checks",
-                "System check identified",
-                "Django version",
-                "Starting development server",
-                "Quit the server"
-            ]):
+            if any(
+                skip in line
+                for skip in [
+                    "Watching for file changes",
+                    "Performing system checks",
+                    "System check identified",
+                    "Django version",
+                    "Starting development server",
+                    "Quit the server",
+                ]
+            ):
                 continue
             # Show errors and important messages
             if line.strip():
                 print(line.rstrip())
-        
+
         process.wait()
     except KeyboardInterrupt:
         print("\n\n⏹️  Server stopped")
@@ -810,15 +813,15 @@ def sorm_make():
         sys.exit(1)
 
     print("🔨 Creating migrations...")
-    
+
     # Suppress Django output
     result = subprocess.run(
         [sys.executable, "manage.py", "makemigrations"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
     )
-    
+
     if result.returncode == 0:
         # Only show relevant output
         output = result.stdout
@@ -826,8 +829,13 @@ def sorm_make():
             print("✅ No changes detected")
         else:
             # Show migration files created
-            for line in output.split('\n'):
-                if 'Migrations for' in line or 'Create model' in line or 'Add field' in line or 'Alter field' in line:
+            for line in output.split("\n"):
+                if (
+                    "Migrations for" in line
+                    or "Create model" in line
+                    or "Add field" in line
+                    or "Alter field" in line
+                ):
                     print(f"  {line.strip()}")
             print("✅ Migrations created!")
     else:
@@ -843,19 +851,19 @@ def sorm_db_migrate():
         sys.exit(1)
 
     print("🚀 Applying migrations...")
-    
+
     result = subprocess.run(
         [sys.executable, "manage.py", "migrate"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
     )
-    
+
     if result.returncode == 0:
         # Only show relevant output
         output = result.stdout
-        for line in output.split('\n'):
-            if 'Applying' in line or 'No migrations' in line:
+        for line in output.split("\n"):
+            if "Applying" in line or "No migrations" in line:
                 print(f"  {line.strip()}")
         print("✅ Migrations applied!")
     else:
@@ -875,35 +883,35 @@ def sorm_db_push():
         [sys.executable, "manage.py", "makemigrations"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
     )
-    
+
     if result.returncode != 0:
         print("❌ Failed to create migrations")
         print(result.stderr)
         sys.exit(1)
-    
+
     output = result.stdout
     if "No changes detected" in output:
         print("✅ No changes detected")
     else:
-        for line in output.split('\n'):
-            if 'Migrations for' in line or 'Create model' in line:
+        for line in output.split("\n"):
+            if "Migrations for" in line or "Create model" in line:
                 print(f"  {line.strip()}")
         print("✅ Migrations created!")
-    
+
     print("🚀 Applying migrations...")
     result = subprocess.run(
         [sys.executable, "manage.py", "migrate"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
     )
-    
+
     if result.returncode == 0:
         output = result.stdout
-        for line in output.split('\n'):
-            if 'Applying' in line:
+        for line in output.split("\n"):
+            if "Applying" in line:
                 print(f"  {line.strip()}")
         print("✅ Database updated!")
     else:
@@ -920,14 +928,14 @@ def sorm_db_reset():
 
     print("⚠️  This will delete all data!")
     confirm = input("Type 'yes' to confirm: ")
-    
+
     if confirm.lower() != "yes":
         print("❌ Cancelled")
         sys.exit(0)
-    
+
     print("🗑️  Flushing database...")
     result = subprocess.run([sys.executable, "manage.py", "flush", "--noinput"])
-    
+
     if result.returncode == 0:
         print("✅ Database reset!")
     else:
@@ -953,14 +961,14 @@ def sorm_studio():
 
     print("🎨 Creating superuser for admin...")
     print("📝 Follow the prompts:\n")
-    
+
     result = subprocess.run([sys.executable, "manage.py", "createsuperuser"])
-    
+
     if result.returncode == 0:
         print("\n✅ Superuser created!")
         print("🚀 Starting Shanks server...")
         print("📊 Admin: http://127.0.0.1:8000/admin\n")
-        
+
         try:
             subprocess.run([sys.executable, "manage.py", "runserver"])
         except KeyboardInterrupt:
@@ -1070,7 +1078,7 @@ def sorm_main():
             print("Usage: sorm db <action>")
             print("Actions: migrate, push, reset, shell")
             sys.exit(1)
-        
+
         action = sys.argv[2]
         if action == "migrate":
             sorm_db_migrate()
