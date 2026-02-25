@@ -47,7 +47,8 @@ def test_response_builder():
 
 def test_middleware():
     """Test middleware support"""
-    app = App()
+    # Disable cache for testing
+    app = App(enable_cache=False)
 
     called = []
 
@@ -61,3 +62,31 @@ def test_middleware():
         return {"ok": True}
 
     assert len(app.middlewares) == 1
+
+
+def test_auto_cache_enabled():
+    """Test that cache is enabled by default"""
+    app = App()
+
+    # Should have 2 middlewares: auto_cache and smart_cache_invalidation
+    assert len(app.middlewares) == 2
+
+    # Can disable cache
+    app2 = App(enable_cache=False)
+    assert len(app2.middlewares) == 0
+
+
+def test_cache_config():
+    """Test cache configuration"""
+    app = App()
+
+    # Configure cache
+    app.cache_config(ttl=600)
+
+    # Should still have cache middlewares
+    assert len(app.middlewares) > 0
+
+    # Disable cache
+    app.disable_cache()
+    assert app._cache_enabled is False
+
