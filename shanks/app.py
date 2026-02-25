@@ -1,6 +1,7 @@
 from functools import wraps
 from typing import Callable, List
 import re
+import sys
 
 from django.http import JsonResponse
 from django.urls import path, re_path
@@ -22,6 +23,39 @@ class App:
 
             self.middlewares.append(auto_cache)
             self.middlewares.append(smart_cache_invalidation)
+
+        # Auto-register this app instance for urlpatterns export
+        self._auto_register()
+
+    def _auto_register(self):
+        """Auto-register app instance to caller's module for urlpatterns export"""
+        # Get the caller's frame (skip __init__ and this method)
+        frame = sys._getframe(2)
+        caller_globals = frame.f_globals
+
+        # Only register if not already registered and not in shanks module itself
+        if (
+            "__shanks_app__" not in caller_globals
+            and caller_globals.get("__name__") != "shanks.app"
+        ):
+            caller_globals["__shanks_app__"] = self
+
+            # Auto-inject urlpatterns getter
+            def __getattr__(name):
+                if name == "urlpatterns":
+                    app = caller_globals.get("__shanks_app__")
+                    if app:
+                        return app.get_urls()
+                raise AttributeError(f"module has no attribute '{name}'")
+
+            # Set __getattr__ on the module
+            import types
+
+            module_name = caller_globals.get("__name__")
+            if module_name and module_name in sys.modules:
+                module = sys.modules[module_name]
+                if not hasattr(module, "__getattr__"):
+                    module.__getattr__ = __getattr__
 
     def _convert_route_to_django(self, route: str):
         """

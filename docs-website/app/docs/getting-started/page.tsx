@@ -64,7 +64,7 @@ export default function GettingStartedPage() {
           <span className="text-red-500">@app.get</span><span className="text-neutral-500">(</span><span className="text-neutral-400">"api/hello"</span><span className="text-neutral-500">)</span>{'\n'}
           <span className="text-red-500">def</span> <span className="text-white">hello</span><span className="text-neutral-500">(</span><span className="text-neutral-600">req</span><span className="text-neutral-500">)</span><span className="text-neutral-500">:</span>{'\n'}
           {'    '}<span className="text-red-500">return</span> <span className="text-neutral-500">{'{'}</span><span className="text-neutral-400">"message"</span><span className="text-neutral-500">:</span> <span className="text-neutral-400">"Hello from Shanks!"</span><span className="text-neutral-500">{'}'}</span>{'\n\n'}
-          <span className="text-neutral-600">urlpatterns = app.get_urls()</span>
+          <span className="text-green-500"># urlpatterns auto-generated! ✨</span>
         </CodeBlock>
       </Section>
 

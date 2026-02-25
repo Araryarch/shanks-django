@@ -102,7 +102,7 @@ app = App()
 def hello(req):
     return {'message': 'Hello World!'}
 
-urlpatterns = app.get_urls()
+# urlpatterns auto-generated! ✨
 ```
 
 ### Add a POST route

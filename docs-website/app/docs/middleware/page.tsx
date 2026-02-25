@@ -262,7 +262,7 @@ app.use(swagger(title="Protected API"))
 def get_data(req):
     return {"user": req.user.username, "data": "value"}
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
           </pre>
         </CardContent>
       </Card>

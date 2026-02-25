@@ -39,7 +39,7 @@ def get_users(req):
 def create_user(req):
     return {"created": True}
 
-urlpatterns = app.get_urls()
+# urlpatterns auto-generated! ✨
 
 # Visit: http://localhost:8000/docs`}</code>
           </pre>
@@ -360,7 +360,7 @@ def list_posts(req):
     posts = Post.find_many()
     return {'posts': [...], 'page': page, 'limit': limit}
 
-@app.get("api/posts/<int:post_id>")
+@app.get("api/posts/<post_id>")
 def get_post(req, post_id):
     """Get single post by ID"""
     post = Post.find_unique(id=post_id)
@@ -380,7 +380,7 @@ def create_post(req):
     )
     return Response().status_code(201).json({'id': post.id})
 
-urlpatterns = app.get_urls()
+# urlpatterns auto-generated! ✨
 
 # Visit: http://localhost:8000/docs`}</code>
           </pre>

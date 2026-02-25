@@ -197,8 +197,7 @@ def health(req):
     return {{"status": "ok", "service": "{project_name}"}}
 
 
-# Export URL patterns
-urlpatterns = app.get_urls()
+# urlpatterns auto-generated! ✨
 '''.format(project_name=project_name)
     (internal_dir / "routes" / "__init__.py").write_text(routes_content)
 
@@ -1011,6 +1010,319 @@ Examples:
     print(help_text)
 
 
+def generate_django_structure():
+    """Generate full Django project structure from Shanks project"""
+    if not Path("manage.py").exists():
+        print("❌ Not in a Shanks project directory!")
+        print("Run this command from your Shanks project root.")
+        sys.exit(1)
+
+    print("🔨 Generating full Django structure...")
+    print(
+        "This will create a 'django_output' directory with standard Django structure.\n"
+    )
+
+    # Create output directory
+    output_dir = Path("django_output")
+    if output_dir.exists():
+        print("⚠️  django_output directory already exists!")
+        confirm = input("Overwrite? (yes/no): ")
+        if confirm.lower() != "yes":
+            print("❌ Cancelled")
+            sys.exit(0)
+        import shutil
+
+        shutil.rmtree(output_dir)
+
+    output_dir.mkdir()
+
+    # Detect project name from settings
+    settings_files = list(Path(".").glob("*/settings.py"))
+    if not settings_files:
+        print("❌ Could not find Django settings.py!")
+        sys.exit(1)
+
+    project_name = settings_files[0].parent.name
+    print(f"📦 Project name: {project_name}")
+
+    # Create Django project structure
+    project_dir = output_dir / project_name
+    project_dir.mkdir()
+
+    # Copy settings.py
+    print("📄 Copying settings.py...")
+    settings_src = Path(project_name) / "settings.py"
+    settings_dst = project_dir / "settings.py"
+    if settings_src.exists():
+        import shutil
+
+        shutil.copy2(settings_src, settings_dst)
+
+    # Copy wsgi.py
+    print("📄 Copying wsgi.py...")
+    wsgi_src = Path(project_name) / "wsgi.py"
+    wsgi_dst = project_dir / "wsgi.py"
+    if wsgi_src.exists():
+        import shutil
+
+        shutil.copy2(wsgi_src, wsgi_dst)
+
+    # Copy asgi.py if exists
+    asgi_src = Path(project_name) / "asgi.py"
+    if asgi_src.exists():
+        print("📄 Copying asgi.py...")
+        import shutil
+
+        shutil.copy2(asgi_src, project_dir / "asgi.py")
+
+    # Create __init__.py
+    (project_dir / "__init__.py").write_text("")
+
+    # Generate urls.py from Shanks routes
+    print("🔗 Generating urls.py from Shanks routes...")
+    urls_content = generate_urls_from_shanks(project_name)
+    (project_dir / "urls.py").write_text(urls_content)
+
+    # Copy all apps (entity, dto, internal, etc.)
+    print("📦 Copying application modules...")
+    for app_dir in ["entity", "dto", "internal", "config", "utils"]:
+        src = Path(app_dir)
+        if src.exists() and src.is_dir():
+            import shutil
+
+            dst = output_dir / app_dir
+            shutil.copytree(src, dst)
+            print(f"  ✓ {app_dir}/")
+
+    # Copy manage.py
+    print("📄 Copying manage.py...")
+    manage_src = Path("manage.py")
+    if manage_src.exists():
+        import shutil
+
+        shutil.copy2(manage_src, output_dir / "manage.py")
+
+    # Copy migrations
+    print("📦 Copying migrations...")
+    for app_dir in ["entity", "internal"]:
+        migrations_src = Path(app_dir) / "migrations"
+        if migrations_src.exists():
+            import shutil
+
+            migrations_dst = output_dir / app_dir / "migrations"
+            if not migrations_dst.parent.exists():
+                migrations_dst.parent.mkdir(parents=True)
+            shutil.copytree(migrations_src, migrations_dst, dirs_exist_ok=True)
+            print(f"  ✓ {app_dir}/migrations/")
+
+    # Copy static and media if exists
+    for dir_name in ["static", "staticfiles", "media"]:
+        src = Path(dir_name)
+        if src.exists():
+            import shutil
+
+            dst = output_dir / dir_name
+            shutil.copytree(src, dst)
+            print(f"  ✓ {dir_name}/")
+
+    # Copy templates if exists
+    templates_src = Path("templates")
+    if templates_src.exists():
+        import shutil
+
+        shutil.copytree(templates_src, output_dir / "templates")
+        print(f"  ✓ templates/")
+
+    # Copy .env files
+    for env_file in [".env", ".env.example"]:
+        src = Path(env_file)
+        if src.exists():
+            import shutil
+
+            shutil.copy2(src, output_dir / env_file)
+            print(f"  ✓ {env_file}")
+
+    # Copy requirements files
+    for req_file in ["requirements.txt", "requirements-dev.txt"]:
+        src = Path(req_file)
+        if src.exists():
+            import shutil
+
+            shutil.copy2(src, output_dir / req_file)
+            print(f"  ✓ {req_file}")
+
+    # Generate README for Django output
+    readme_content = f"""# {project_name} - Django Structure
+
+This is the standard Django structure generated from your Shanks project.
+
+## Structure
+
+```
+{project_name}/
+├── {project_name}/        # Django settings
+│   ├── settings.py
+│   ├── urls.py           # Generated from Shanks routes
+│   └── wsgi.py
+├── entity/               # Django models
+├── internal/             # Application code
+├── manage.py
+└── requirements.txt
+```
+
+## Deployment
+
+This structure is ready for standard Django deployment:
+
+### Using Gunicorn
+
+```bash
+pip install gunicorn
+gunicorn {project_name}.wsgi:application
+```
+
+### Using uWSGI
+
+```bash
+pip install uwsgi
+uwsgi --http :8000 --module {project_name}.wsgi
+```
+
+### Using Docker
+
+```dockerfile
+FROM python:3.11
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["gunicorn", "{project_name}.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+### Environment Variables
+
+Make sure to set:
+- `SECRET_KEY`
+- `DEBUG=False` (for production)
+- `ALLOWED_HOSTS`
+- Database settings
+
+## Running Locally
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+## Comparison with Shanks
+
+- Shanks version: Uses `internal/routes/__init__.py` with auto-generated urlpatterns
+- Django version: Uses `{project_name}/urls.py` with explicit URL patterns
+
+Both versions are functionally identical, but the Django version is more familiar
+for traditional Django deployment tools and hosting platforms.
+"""
+    (output_dir / "README.md").write_text(readme_content)
+
+    print("\n✅ Django structure generated successfully!")
+    print(f"\n📁 Output directory: django_output/")
+    print(f"\n📋 Structure:")
+    print(f"  django_output/")
+    print(f"  ├── {project_name}/")
+    print(f"  │   ├── settings.py")
+    print(f"  │   ├── urls.py        # Generated from Shanks routes")
+    print(f"  │   └── wsgi.py")
+    print(f"  ├── entity/            # Your models")
+    print(f"  ├── internal/          # Your app code")
+    print(f"  ├── manage.py")
+    print(f"  └── README.md")
+    print(f"\n🚀 Ready for deployment!")
+    print(f"\n💡 Compare with your Shanks version:")
+    print(f"   diff -r . django_output/")
+
+
+def generate_urls_from_shanks(project_name):
+    """Generate Django urls.py from Shanks routes"""
+    # Try to import and inspect the routes
+    try:
+        import sys
+        import importlib.util
+
+        # Add current directory to path
+        sys.path.insert(0, str(Path.cwd()))
+
+        # Try to load routes module
+        routes_path = Path("internal/routes/__init__.py")
+        if not routes_path.exists():
+            # Fallback to basic urls.py
+            return f'''"""
+URL Configuration for {project_name}
+Generated from Shanks routes
+"""
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # Add your URL patterns here
+]
+'''
+
+        # Load the routes module
+        spec = importlib.util.spec_from_file_location("routes", routes_path)
+        routes_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(routes_module)
+
+        # Get the app instance
+        if hasattr(routes_module, "app"):
+            app = routes_module.app
+            # Get URL patterns from app
+            urlpatterns = app.get_urls()
+
+            # Generate urls.py content
+            urls_content = f'''"""
+URL Configuration for {project_name}
+Generated from Shanks routes
+"""
+from django.contrib import admin
+from django.urls import path, include
+
+# Import your routes
+from internal.routes import app
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+]
+
+# Add Shanks routes
+urlpatterns += app.get_urls()
+'''
+            return urls_content
+
+    except Exception as e:
+        print(f"⚠️  Could not auto-generate URLs: {e}")
+        print("   Creating basic urls.py template...")
+
+    # Fallback template
+    return f'''"""
+URL Configuration for {project_name}
+Generated from Shanks routes
+"""
+from django.contrib import admin
+from django.urls import path, include
+
+# Import your routes
+from internal.routes import app
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+]
+
+# Add Shanks routes
+urlpatterns += app.get_urls()
+'''
+
+
 def show_help():
     """Show help message"""
     help_text = """
@@ -1036,6 +1348,10 @@ Commands:
     create auth --complete       Generate complete auth endpoints
                                  Creates: /login, /register, /verify, /me
 
+    generate django              Generate full Django project structure
+                                 Creates: django_output/ with standard Django layout
+                                 Useful for deployment or comparison
+
     format                       Format code with black
     lint                         Lint code with flake8
     check                        Format and lint code
@@ -1054,6 +1370,7 @@ Examples:
     shanks new myproject                # Create new project
     shanks create products --crud       # Generate products CRUD
     shanks create auth --simple         # Generate auth endpoints
+    shanks generate django              # Generate Django structure
     shanks run                          # Start server
     shanks format                       # Format code
     
@@ -1138,6 +1455,20 @@ def main():
     elif command == "check":
         format_code()
         lint_code()
+    elif command == "generate":
+        # Handle generate subcommands
+        if len(sys.argv) < 3:
+            print("Usage: shanks generate <type>")
+            print("Types: django")
+            sys.exit(1)
+
+        subcommand = sys.argv[2]
+        if subcommand == "django":
+            generate_django_structure()
+        else:
+            print(f"Unknown generate type: {subcommand}")
+            print("Use: shanks generate django")
+            sys.exit(1)
     elif command == "help":
         show_help()
     else:

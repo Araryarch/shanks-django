@@ -134,7 +134,7 @@ def list_posts(req):
     posts = Post.find_many()
     return {'posts': [...], 'page': page, 'limit': limit}
 
-@app.get('api/posts/<int:post_id>')
+@app.get('api/posts/<post_id>')
 def get_post(req, post_id):
     post = Post.find_unique(id=post_id)
     if not post:
@@ -146,13 +146,13 @@ def create_post(req):
     post = Post.create(**req.body)
     return Response().status_code(201).json({'id': post.id})
 
-@app.put('api/posts/<int:post_id>')
+@app.put('api/posts/<post_id>')
 def update_post(req, post_id):
     post = Post.find_unique(id=post_id)
     post.update_self(**req.body)
     return {'updated': True}
 
-@app.delete('api/posts/<int:post_id>')
+@app.delete('api/posts/<post_id>')
 def delete_post(req, post_id):
     post = Post.find_unique(id=post_id)
     post.delete_self()
@@ -178,6 +178,39 @@ Yang di-generate untuk `--complete`:
 - Semua dari `--simple`
 - POST `/api/auth/verify` - Email verification
 - POST `/api/auth/resend` - Resend verification email
+
+### Generate Django Structure
+
+```bash
+# Generate full Django project structure
+shanks generate django
+```
+
+Command ini akan:
+- ✅ Generate folder `django_output/` dengan struktur Django standard
+- ✅ Convert Shanks routes ke Django `urls.py`
+- ✅ Copy semua models, migrations, dan app code
+- ✅ Siap untuk deployment dengan Gunicorn/uWSGI
+- ✅ Berguna untuk comparison atau deployment ke platform yang butuh Django standard
+
+Output structure:
+```
+django_output/
+├── myproject/
+│   ├── settings.py
+│   ├── urls.py          # Generated from Shanks routes
+│   └── wsgi.py
+├── entity/              # Your models
+├── internal/            # Your app code
+├── manage.py
+└── README.md            # Deployment guide
+```
+
+Kenapa perlu ini?
+- 🚀 **Easy deployment** - Banyak platform hosting familiar dengan Django standard
+- 📊 **Comparison** - Compare Shanks vs Django structure
+- 🔄 **Migration** - Kalau mau migrate dari Shanks ke pure Django
+- 📦 **Compatibility** - Beberapa tools butuh Django standard structure
 
 ### Database Management (SORM)
 
@@ -212,17 +245,18 @@ Command `sorm` mirip dengan Prisma CLI:
 Sekarang gak perlu specify type di URL parameters! Shanks auto-detect:
 
 ```python
-# Old way (masih bisa dipakai)
-@app.get('api/posts/<int:post_id>')
+# Auto-detect as int (karena nama berakhiran '_id')
+@app.get('api/posts/<post_id>')
 def get_post(req, post_id):
     return {'id': post_id}
 
-# New way (auto-detect)
-@app.get('api/posts/<post_id>')  # auto-detect as int karena nama 'post_id'
-def get_post(req, post_id):
-    return {'id': post_id}
+# Auto-detect as string
+@app.get('api/users/<username>')
+def get_user(req, username):
+    return {'username': username}
 
-@app.get('api/users/<username>')  # auto-detect as string
+# Masih bisa explicit type kalau perlu
+@app.get('api/posts/<slug:slug>')  # force as slug
 def get_user(req, username):
     return {'username': username}
 ```
@@ -259,7 +293,7 @@ def me(req):
 # Include group to main app
 app.include(auth)
 
-urlpatterns = app.get_urls()
+# urlpatterns auto-generated! ✨
 ```
 
 Hasil:
@@ -464,11 +498,11 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ## 🔗 Links
 
-- **GitHub**: https://github.com/Ararya/shanks-django
+- **GitHub**: https://github.com/Araryarch/shanks-django
 - **PyPI**: https://pypi.org/project/shanks-django/
-- **Issues**: https://github.com/Ararya/shanks-django/issues
+- **Issues**: https://github.com/Araryarch/shanks-django/issues
 - **VSCode Extension**: https://marketplace.visualstudio.com/items?itemName=Ararya.shanks-django
 
 ---
 
-Made with ❤️ by [Ararya](https://github.com/Ararya)
+Made with ❤️ by [Ararya](https://github.com/Araryarch)

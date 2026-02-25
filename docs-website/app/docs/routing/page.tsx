@@ -35,15 +35,15 @@ def create_post(req):
 def get_post(req, id):
     return {"post": {"id": id}}
 
-@app.put("api/posts/<int:id>")
+@app.put("api/posts/<id>")
 def update_post(req, id):
     return {"updated": True}
 
-@app.delete("api/posts/<int:id>")
+@app.delete("api/posts/<id>")
 def delete_post(req, id):
     return {"deleted": True}
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
           </pre>
         </CardContent>
       </Card>
@@ -81,7 +81,7 @@ admin = v1.group("admin")
 def get_stats(req):
     return {"stats": {}}  # GET /api/v1/admin/stats
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
           </pre>
         </CardContent>
       </Card>
@@ -140,7 +140,7 @@ app = App()
 # Include all routers
 app.include(auth.router, posts.router)
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
               </pre>
             </div>
           </div>
@@ -171,8 +171,8 @@ def get_post(req, slug):
 def get_file(req, filepath):
     return {"path": filepath}
 
-# Multiple parameters
-@app.get("api/users/<int:user_id>/posts/<int:post_id>")
+# Multiple parameters (auto-detect as int)
+@app.get("api/users/<user_id>/posts/<post_id>")
 def get_user_post(req, user_id, post_id):
     return {"user_id": user_id, "post_id": post_id}`}</code>
           </pre>
@@ -399,7 +399,7 @@ def delete_post(req, id):
     post.delete_self()
     return {"deleted": True}
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
           </pre>
         </CardContent>
       </Card>

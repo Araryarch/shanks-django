@@ -455,7 +455,7 @@ def get_me(req):
         'email': req.user.email
     }
 
-urlpatterns = app.get_urls()`}</code>
+# urlpatterns auto-generated! ✨`}</code>
           </pre>
         </CardContent>
       </Card>

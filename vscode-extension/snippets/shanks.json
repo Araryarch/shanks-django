@@ -10,7 +10,7 @@
       "def ${2:hello}(req):",
       "    return {'${3:message}': '${4:Hello World!}'}",
       "",
-      "urlpatterns = app.get_urls()"
+      "# urlpatterns auto-generated! ✨"
     ],
     "description": "Create a new Shanks app"
   },
@@ -220,7 +220,7 @@
       "    data = req.body",
       "    return Response().status_code(201).json(data)",
       "",
-      "urlpatterns = app.get_urls()"
+      "# urlpatterns auto-generated! ✨"
     ],
     "description": "Create full API with CORS and Swagger"
   },
@@ -487,7 +487,7 @@
       "    ${3:users}.router",
       ")",
       "",
-      "urlpatterns = app.get_urls()"
+      "# urlpatterns auto-generated! ✨"
     ],
     "description": "Include multiple routers"
   },
