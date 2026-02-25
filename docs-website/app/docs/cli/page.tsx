@@ -173,25 +173,73 @@ shanks run 0.0.0.0:8000       # All interfaces`}</code>
 
       <Card>
         <CardHeader>
-          <CardTitle>Database Commands</CardTitle>
+          <CardTitle>Database Commands (SORM)</CardTitle>
           <CardDescription>
-            Manage database migrations and operations.
+            Prisma-like database management commands. Manage migrations and database operations easily.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`# Create migrations
-python manage.py makemigrations
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Create Migrations</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm make`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma migrate dev --create-only</code>
+              </p>
+            </div>
 
-# Apply migrations
-python manage.py migrate
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Apply Migrations</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm db migrate`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma migrate deploy</code>
+              </p>
+            </div>
 
-# Create superuser
-python manage.py createsuperuser
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Push to Database (Create + Apply)</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm db push`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma db push</code> - Creates and applies migrations in one command
+              </p>
+            </div>
 
-# Shell
-python manage.py shell`}</code>
-          </pre>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Reset Database</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm db reset`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Flush all data from database (requires confirmation)
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Database Shell</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm db shell`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Open interactive database shell
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Studio (Admin Panel)</h3>
+              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
+                <code className="text-sm">{`sorm studio`}</code>
+              </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma studio</code> - Opens Django Admin panel at /admin
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -215,19 +263,19 @@ shanks create comments --crud
 # 3. Generate auth
 shanks create auth --simple
 
-# 4. Run migrations
-python manage.py makemigrations
-python manage.py migrate
+# 4. Push to database (create + apply migrations)
+sorm db push
 
-# 5. Create admin user
-python manage.py createsuperuser
+# 5. Open admin panel
+sorm studio
 
 # 6. Start server
 shanks run
 
 # 7. Visit API
 # http://127.0.0.1:8000/api/posts
-# http://127.0.0.1:8000/docs (Swagger)`}</code>
+# http://127.0.0.1:8000/docs (Swagger)
+# http://127.0.0.1:8000/admin (Admin Panel)`}</code>
           </pre>
         </CardContent>
       </Card>
@@ -254,6 +302,30 @@ shanks run
               <div className="space-y-1">
                 <code className="text-sm bg-muted px-2 py-1 rounded">shanks create auth --complete</code>
                 <p className="text-xs text-muted-foreground">Generate complete auth</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm make</code>
+                <p className="text-xs text-muted-foreground">Create migrations</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm db migrate</code>
+                <p className="text-xs text-muted-foreground">Apply migrations</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm db push</code>
+                <p className="text-xs text-muted-foreground">Create + apply migrations</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm db reset</code>
+                <p className="text-xs text-muted-foreground">Reset database</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm db shell</code>
+                <p className="text-xs text-muted-foreground">Database shell</p>
+              </div>
+              <div className="space-y-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">sorm studio</code>
+                <p className="text-xs text-muted-foreground">Open admin panel</p>
               </div>
               <div className="space-y-1">
                 <code className="text-sm bg-muted px-2 py-1 rounded">shanks run [port]</code>

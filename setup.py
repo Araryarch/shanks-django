@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="shanks-django",
-    version="0.1.0",
+    version="0.1.2",
     author="Ararya",
     author_email="araryaarch@gmail.com",
     description="Express.js-like framework built on Django",
@@ -57,12 +57,13 @@ setup(
     entry_points={
         "console_scripts": [
             "shanks=shanks.cli:main",
+            "sorm=shanks.cli:sorm_main",
         ],
     },
     keywords="django express framework web api rest",
     project_urls={
-        "Bug Reports": "https://github.com/Ararya/shanks-django/issues",
-        "Source": "https://github.com/Ararya/shanks-django",
-        "Documentation": "https://github.com/Ararya/shanks-django#readme",
+        "Bug Reports": "https://github.com/Araryarch/shanks-django/issues",
+        "Source": "https://github.com/Araryarch/shanks-django",
+        "Documentation": "https://github.com/Araryarch/shanks-docs#readme",
     },
 )

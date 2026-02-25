@@ -79,7 +79,16 @@ export default function GettingStartedPage() {
 
       <Section>
         <H2>Run Migrations</H2>
-        <SimpleCodeBlock>python manage.py migrate</SimpleCodeBlock>
+        <SimpleCodeBlock>
+          sorm db push{'\n'}
+          # or separately:{'\n'}
+          sorm make{'\n'}
+          sorm db migrate
+        </SimpleCodeBlock>
+        <P>
+          Use <InlineCode>sorm db push</InlineCode> to create and apply migrations in one command,
+          similar to Prisma's <InlineCode>db push</InlineCode>.
+        </P>
       </Section>
 
       <Section>

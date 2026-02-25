@@ -79,7 +79,7 @@ def run_server():
     # Check if manage.py exists
     if not Path("manage.py").exists():
         print("❌ manage.py not found!")
-        print("Make sure you're in a Django project directory.")
+        print("Make sure you're in a Shanks project directory.")
         sys.exit(1)
 
     # Get host and port from args
@@ -95,15 +95,41 @@ def run_server():
 
     print(f"🚀 Starting Shanks development server...")
     print(f"📡 Server running at http://{host}:{port}")
-    print(f"🔄 Auto-reload enabled (like nodemon)")
+    print(f"🔄 Auto-reload enabled")
     print(f"⏹️  Press Ctrl+C to stop\n")
 
-    # Run Django development server with auto-reload
+    # Run Django development server with suppressed output
     try:
-        subprocess.run(
-            [sys.executable, "manage.py", "runserver", f"{host}:{port}"],
-            check=True,
+        # Suppress Django startup messages
+        env = os.environ.copy()
+        env['PYTHONUNBUFFERED'] = '1'
+        
+        process = subprocess.Popen(
+            [sys.executable, "manage.py", "runserver", f"{host}:{port}", "--noreload"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
         )
+        
+        # Filter output to only show relevant info
+        for line in process.stdout:
+            # Skip Django version and startup messages
+            if any(skip in line for skip in [
+                "Watching for file changes",
+                "Performing system checks",
+                "System check identified",
+                "Django version",
+                "Starting development server",
+                "Quit the server"
+            ]):
+                continue
+            # Show errors and important messages
+            if line.strip():
+                print(line.rstrip())
+        
+        process.wait()
     except KeyboardInterrupt:
         print("\n\n⏹️  Server stopped")
     except subprocess.CalledProcessError as e:
@@ -154,15 +180,9 @@ def create_project():
 
     # Create routes with example
     routes_content = '''"""API Routes"""
-from shanks import App, swagger, auto_cache, smart_cache_invalidation
+from shanks import App, swagger
 
-app = App()
-
-# Enable built-in caching - auto-cache GET requests!
-app.use(auto_cache)
-
-# Smart cache invalidation - auto-clear cache on POST/PUT/DELETE
-app.use(smart_cache_invalidation)
+app = App()  # Cache enabled by default!
 
 # Enable Swagger - applies to all endpoints!
 app.use(swagger(title="{project_name} API", version="1.0.0"))
@@ -558,41 +578,54 @@ def delete(req, id):
 '''
     controller_file.write_text(controller_content)
 
-    # Create routes
+    # Create routes with grouping
     routes_dir = Path("internal/routes")
     routes_file = routes_dir / f"{endpoint_name}.py"
     routes_content = f'''"""
 {model_name} Routes
 """
 from shanks import App
-from internal.controller import {endpoint_name} as ctrl
+from internal.controller import {endpoint_name} as controller
 
+# Create router
 router = App()
 
+# Group routes under /api/{endpoint_plural}
+routes = router.group('api/{endpoint_plural}')
 
-@router.get("api/{endpoint_plural}")
+
+@routes.get('')
 def list_{endpoint_plural}(req):
-    return ctrl.list_{endpoint_plural}(req)
+    """List all {endpoint_plural} with pagination"""
+    return controller.list_{endpoint_plural}(req)
 
 
-@router.get("api/{endpoint_plural}/<int:id>")
+@routes.get('<id>')
 def get_{endpoint_name}(req, id):
-    return ctrl.get_by_id(req, id)
+    """Get {endpoint_name} by ID"""
+    return controller.get_by_id(req, id)
 
 
-@router.post("api/{endpoint_plural}")
+@routes.post('')
 def create_{endpoint_name}(req):
-    return ctrl.create(req)
+    """Create new {endpoint_name}"""
+    return controller.create(req)
 
 
-@router.put("api/{endpoint_plural}/<int:id>")
+@routes.put('<id>')
 def update_{endpoint_name}(req, id):
-    return ctrl.update(req, id)
+    """Update {endpoint_name}"""
+    return controller.update(req, id)
 
 
-@router.delete("api/{endpoint_plural}/<int:id>")
+@routes.delete('<id>')
 def delete_{endpoint_name}(req, id):
-    return ctrl.delete(req, id)
+    """Delete {endpoint_name}"""
+    return controller.delete(req, id)
+
+
+# Include group routes to router
+router.include(routes)
 '''
     routes_file.write_text(routes_content)
 
@@ -606,8 +639,7 @@ def delete_{endpoint_name}(req, id):
     print(f"      from . import {endpoint_name}")
     print(f"      app.include({endpoint_name}.router)")
     print(f"   2. Run migrations:")
-    print(f"      python manage.py makemigrations")
-    print(f"      python manage.py migrate")
+    print(f"      sorm db push")
     print(f"\n🎯 Endpoints:")
     print(f"  GET    /api/{endpoint_plural}")
     print(f"  GET    /api/{endpoint_plural}/<id>")
@@ -639,11 +671,16 @@ def create_auth_endpoint():
 from shanks import App, Response
 from SORM import User, authenticate
 
+# Create router
 router = App()
 
+# Group auth routes under /api/auth
+auth = router.group('api/auth')
 
-@router.post("api/auth/register")
+
+@auth.post('register')
 def register(req):
+    """Register new user"""
     data = req.body
     username = data.get("username")
     email = data.get("email")
@@ -659,8 +696,9 @@ def register(req):
     return Response().status_code(201).json({"message": "Registered", "user_id": user.id})
 
 
-@router.post("api/auth/login")
+@auth.post('login')
 def login(req):
+    """Login user"""
     data = req.body
     user = authenticate(username=data.get("username"), password=data.get("password"))
     
@@ -670,23 +708,33 @@ def login(req):
     return {"message": "Login successful", "user_id": user.id}
 
 
-@router.get("api/auth/me")
+@auth.get('me')
 def get_me(req):
+    """Get current user"""
     if not req.user.is_authenticated:
         return Response().status_code(401).json({"error": "Not authenticated"})
     
     return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
+
+
+# Include group routes to router
+router.include(auth)
 '''
     else:  # --complete
         auth_content = '''"""Auth Routes - Complete"""
 from shanks import App, Response
 from SORM import User, authenticate
 
+# Create router
 router = App()
 
+# Group auth routes under /api/auth
+auth = router.group('api/auth')
 
-@router.post("api/auth/register")
+
+@auth.post('register')
 def register(req):
+    """Register new user"""
     data = req.body
     username = data.get("username")
     email = data.get("email")
@@ -703,15 +751,17 @@ def register(req):
     return Response().status_code(201).json({"message": "Check email to verify"})
 
 
-@router.post("api/auth/verify")
+@auth.post('verify')
 def verify_email(req):
+    """Verify email"""
     token = req.body.get("token")
     # TODO: Implement verification
     return {"message": "Email verified"}
 
 
-@router.post("api/auth/login")
+@auth.post('login')
 def login(req):
+    """Login user"""
     data = req.body
     user = authenticate(username=data.get("username"), password=data.get("password"))
     
@@ -724,12 +774,17 @@ def login(req):
     return {"message": "Login successful", "user_id": user.id}
 
 
-@router.get("api/auth/me")
+@auth.get('me')
 def get_me(req):
+    """Get current user"""
     if not req.user.is_authenticated:
         return Response().status_code(401).json({"error": "Not authenticated"})
     
     return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
+
+
+# Include group routes to router
+router.include(auth)
 '''
 
     auth_file.write_text(auth_content)
@@ -746,6 +801,206 @@ def get_me(req):
     print(f"\n🎯 Endpoints:")
     for e in endpoints:
         print(f"  {e}")
+
+
+def sorm_make():
+    """Create migrations (like makemigrations)"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("🔨 Creating migrations...")
+    
+    # Suppress Django output
+    result = subprocess.run(
+        [sys.executable, "manage.py", "makemigrations"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    if result.returncode == 0:
+        # Only show relevant output
+        output = result.stdout
+        if "No changes detected" in output:
+            print("✅ No changes detected")
+        else:
+            # Show migration files created
+            for line in output.split('\n'):
+                if 'Migrations for' in line or 'Create model' in line or 'Add field' in line or 'Alter field' in line:
+                    print(f"  {line.strip()}")
+            print("✅ Migrations created!")
+    else:
+        print("❌ Failed to create migrations")
+        print(result.stderr)
+        sys.exit(1)
+
+
+def sorm_db_migrate():
+    """Apply migrations to database"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("🚀 Applying migrations...")
+    
+    result = subprocess.run(
+        [sys.executable, "manage.py", "migrate"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    if result.returncode == 0:
+        # Only show relevant output
+        output = result.stdout
+        for line in output.split('\n'):
+            if 'Applying' in line or 'No migrations' in line:
+                print(f"  {line.strip()}")
+        print("✅ Migrations applied!")
+    else:
+        print("❌ Failed to apply migrations")
+        print(result.stderr)
+        sys.exit(1)
+
+
+def sorm_db_push():
+    """Create and apply migrations in one step"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("🔨 Creating migrations...")
+    result = subprocess.run(
+        [sys.executable, "manage.py", "makemigrations"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    if result.returncode != 0:
+        print("❌ Failed to create migrations")
+        print(result.stderr)
+        sys.exit(1)
+    
+    output = result.stdout
+    if "No changes detected" in output:
+        print("✅ No changes detected")
+    else:
+        for line in output.split('\n'):
+            if 'Migrations for' in line or 'Create model' in line:
+                print(f"  {line.strip()}")
+        print("✅ Migrations created!")
+    
+    print("🚀 Applying migrations...")
+    result = subprocess.run(
+        [sys.executable, "manage.py", "migrate"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    if result.returncode == 0:
+        output = result.stdout
+        for line in output.split('\n'):
+            if 'Applying' in line:
+                print(f"  {line.strip()}")
+        print("✅ Database updated!")
+    else:
+        print("❌ Failed to apply migrations")
+        print(result.stderr)
+        sys.exit(1)
+
+
+def sorm_db_reset():
+    """Reset database (flush all data)"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("⚠️  This will delete all data!")
+    confirm = input("Type 'yes' to confirm: ")
+    
+    if confirm.lower() != "yes":
+        print("❌ Cancelled")
+        sys.exit(0)
+    
+    print("🗑️  Flushing database...")
+    result = subprocess.run([sys.executable, "manage.py", "flush", "--noinput"])
+    
+    if result.returncode == 0:
+        print("✅ Database reset!")
+    else:
+        print("❌ Failed to reset database")
+        sys.exit(1)
+
+
+def sorm_db_shell():
+    """Open database shell"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("🐚 Opening database shell...")
+    subprocess.run([sys.executable, "manage.py", "dbshell"])
+
+
+def sorm_studio():
+    """Open Django admin (like Prisma Studio)"""
+    if not Path("manage.py").exists():
+        print("❌ manage.py not found!")
+        sys.exit(1)
+
+    print("🎨 Creating superuser for admin...")
+    print("📝 Follow the prompts:\n")
+    
+    result = subprocess.run([sys.executable, "manage.py", "createsuperuser"])
+    
+    if result.returncode == 0:
+        print("\n✅ Superuser created!")
+        print("🚀 Starting Shanks server...")
+        print("📊 Admin: http://127.0.0.1:8000/admin\n")
+        
+        try:
+            subprocess.run([sys.executable, "manage.py", "runserver"])
+        except KeyboardInterrupt:
+            print("\n⏹️  Server stopped")
+
+
+def show_sorm_help():
+    """Show SORM help message"""
+    help_text = """
+SORM - Shanks ORM CLI (Prisma-like)
+
+Usage:
+    sorm <command> [options]
+
+Commands:
+    make                         Create migrations
+                                 Like: prisma migrate dev --create-only
+
+    db migrate                   Apply migrations to database
+                                 Like: prisma migrate deploy
+
+    db push                      Create and apply migrations (recommended)
+                                 Like: prisma db push
+
+    db reset                     Reset database (flush all data)
+                                 Requires confirmation
+
+    db shell                     Open interactive database shell
+
+    studio                       Create superuser and open admin panel
+                                 Like: prisma studio
+
+Examples:
+    sorm make                    # Create migrations
+    sorm db migrate              # Apply migrations
+    sorm db push                 # Create + apply (one command)
+    sorm db reset                # Reset database
+    sorm studio                  # Open admin panel
+"""
+    print(help_text)
 
 
 def show_help():
@@ -779,14 +1034,64 @@ Commands:
 
     help                         Show this help message
 
+Database Commands (use 'sorm' CLI):
+    sorm make                    Create migrations
+    sorm db migrate              Apply migrations
+    sorm db push                 Create + apply migrations
+    sorm db reset                Reset database
+    sorm db shell                Database shell
+    sorm studio                  Open admin panel
+
 Examples:
     shanks new myproject                # Create new project
     shanks create products --crud       # Generate products CRUD
     shanks create auth --simple         # Generate auth endpoints
     shanks run                          # Start server
     shanks format                       # Format code
+    
+    sorm db push                        # Database migrations
+    sorm studio                         # Open admin panel
 """
     print(help_text)
+
+
+def sorm_main():
+    """Main entry point for SORM CLI"""
+    if len(sys.argv) < 2:
+        show_sorm_help()
+        sys.exit(0)
+
+    command = sys.argv[1]
+
+    if command == "make":
+        sorm_make()
+    elif command == "db":
+        if len(sys.argv) < 3:
+            print("Usage: sorm db <action>")
+            print("Actions: migrate, push, reset, shell")
+            sys.exit(1)
+        
+        action = sys.argv[2]
+        if action == "migrate":
+            sorm_db_migrate()
+        elif action == "push":
+            sorm_db_push()
+        elif action == "reset":
+            sorm_db_reset()
+        elif action == "shell":
+            sorm_db_shell()
+        else:
+            print(f"Unknown db action: {action}")
+            print("Use: migrate, push, reset, or shell")
+            sys.exit(1)
+    elif command == "studio":
+        sorm_studio()
+    elif command == "help" or command == "--help" or command == "-h":
+        show_sorm_help()
+    else:
+        print(f"Unknown command: {command}")
+        show_sorm_help()
+        sys.exit(1)
 
 
 def main():

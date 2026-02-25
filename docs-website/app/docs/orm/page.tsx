@@ -121,6 +121,89 @@ export default function ORMPage() {
           You can still use the old Django way if you prefer. Both syntaxes work together.
         </P>
       </Alert>
+
+      <Section>
+        <H2>SORM CLI Commands</H2>
+        <P>
+          Manage your database with Prisma-like commands. SORM (Shanks ORM) provides a simple CLI for migrations.
+        </P>
+        
+        <div className="space-y-6 mt-6">
+          <div>
+            <H3>Create Migrations</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm make</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma migrate dev --create-only</code>
+            </P>
+          </div>
+
+          <div>
+            <H3>Apply Migrations</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm db migrate</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma migrate deploy</code>
+            </P>
+          </div>
+
+          <div>
+            <H3>Push to Database (Recommended)</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm db push</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma db push</code> - Creates and applies migrations in one command
+            </P>
+          </div>
+
+          <div>
+            <H3>Reset Database</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm db reset</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Flush all data from database (requires confirmation)
+            </P>
+          </div>
+
+          <div>
+            <H3>Database Shell</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm db shell</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Open interactive database shell
+            </P>
+          </div>
+
+          <div>
+            <H3>Studio (Admin Panel)</H3>
+            <CodeBlock>
+              <span className="text-neutral-600">sorm studio</span>
+            </CodeBlock>
+            <P className="text-sm text-muted-foreground mt-2">
+              Like <code className="text-xs bg-muted px-1 py-0.5 rounded">prisma studio</code> - Opens Django Admin at /admin
+            </P>
+          </div>
+        </div>
+      </Section>
+
+      <Section>
+        <H2>Typical Workflow</H2>
+        <CodeBlock>
+          <span className="text-neutral-600"># 1. Define your models</span>{'\n'}
+          <span className="text-neutral-600"># entity/post.py</span>{'\n\n'}
+          <span className="text-neutral-600"># 2. Push to database</span>{'\n'}
+          <span className="text-neutral-600">sorm db push</span>{'\n\n'}
+          <span className="text-neutral-600"># 3. Open admin panel</span>{'\n'}
+          <span className="text-neutral-600">sorm studio</span>{'\n\n'}
+          <span className="text-neutral-600"># 4. Start coding!</span>{'\n'}
+          <span className="text-neutral-600">shanks run</span>
+        </CodeBlock>
+      </Section>
     </div>
   )
 }
