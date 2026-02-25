@@ -59,11 +59,19 @@ def get_cache():
 
 def cache_key(request):
     """Generate cache key from request"""
+    # Handle both Shanks Request wrapper and Django request
+    if hasattr(request, "django"):
+        # Shanks Request wrapper
+        django_request = request.django
+    else:
+        # Direct Django request
+        django_request = request
+
     # Include method, path, and query params
     key_parts = [
-        request.method,
-        request.path,
-        json.dumps(dict(request.GET), sort_keys=True),
+        django_request.method,
+        django_request.path,
+        json.dumps(dict(django_request.GET), sort_keys=True),
     ]
     key_string = "|".join(key_parts)
     return hashlib.md5(key_string.encode()).hexdigest()
