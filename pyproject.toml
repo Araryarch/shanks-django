@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shanks-django"
-version = "0.1.0"
+version = "0.2.0"
 description = "Express.js-like framework built on Django"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -25,6 +25,11 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Framework :: Django",
+  "Framework :: Django :: 3.2",
+  "Framework :: Django :: 4.0",
+  "Framework :: Django :: 4.1",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.0",
 ]
 dependencies = [
   "django>=3.2",
@@ -32,11 +37,25 @@ dependencies = [
   "watchdog>=3.0.0"
 ]
 
+[project.optional-dependencies]
+postgres = ["psycopg2-binary>=2.9.0"]
+mysql = ["mysqlclient>=2.1.0"]
+mongodb = ["pymongo>=4.0.0"]
+redis = ["redis>=4.0.0"]
+all = [
+  "psycopg2-binary>=2.9.0",
+  "mysqlclient>=2.1.0",
+  "pymongo>=4.0.0",
+  "redis>=4.0.0",
+  "dj-database-url>=2.0.0"
+]
+
 [project.scripts]
 shanks = "shanks.cli:main"
+sorm = "shanks.cli:sorm_main"
 
 [project.urls]
-Homepage = "https://github.com/Ararya/shanks-django"
-Documentation = "https://github.com/Ararya/shanks-django#readme"
-Repository = "https://github.com/Ararya/shanks-django"
-"Bug Tracker" = "https://github.com/Ararya/shanks-django/issues"
+Homepage = "https://github.com/Araryarch/shanks-django"
+Documentation = "https://github.com/Araryarch/shanks-docs#readme"
+Repository = "https://github.com/Araryarch/shanks-django"
+"Bug Tracker" = "https://github.com/Araryarch/shanks-django/issues"

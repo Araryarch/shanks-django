@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="shanks-django",
-    version="0.1.2",
+    version="0.2.0",
     author="Ararya",
     author_email="araryaarch@gmail.com",
     description="Express.js-like framework built on Django",
