@@ -5,7 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 SHANKS_ASCII = r"""
    _____ _                 _        
   / ____| |               | |       
@@ -36,10 +35,10 @@ def create_project():
     # Create Django project
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "django", "startproject", project_name], 
+            [sys.executable, "-m", "django", "startproject", project_name],
             check=False,
             capture_output=True,
-            text=True
+            text=True,
         )
         if result.returncode != 0:
             raise subprocess.CalledProcessError(result.returncode, result.args)
@@ -48,13 +47,13 @@ def create_project():
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "django"],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
         result = subprocess.run(
-            [sys.executable, "-m", "django", "startproject", project_name], 
+            [sys.executable, "-m", "django", "startproject", project_name],
             check=False,
             capture_output=True,
-            text=True
+            text=True,
         )
         if result.returncode != 0:
             print(f"[ERROR] Failed to create project: {result.stderr}")
@@ -67,17 +66,17 @@ def create_project():
     print("[1/5] Creating directory structure...")
     internal_dir = project_dir / "internal"
     internal_dir.mkdir(exist_ok=True)
-    (internal_dir / "__init__.py").write_text("", encoding='utf-8')
+    (internal_dir / "__init__.py").write_text("", encoding="utf-8")
 
     for subdir in ["controller", "repository", "service", "middleware", "routes"]:
         dir_path = internal_dir / subdir
         dir_path.mkdir(exist_ok=True)
-        (dir_path / "__init__.py").write_text("", encoding='utf-8')
+        (dir_path / "__init__.py").write_text("", encoding="utf-8")
 
     for dir_name in ["dto", "entity", "config", "utils"]:
         dir_path = project_dir / dir_name
         dir_path.mkdir(exist_ok=True)
-        (dir_path / "__init__.py").write_text("", encoding='utf-8')
+        (dir_path / "__init__.py").write_text("", encoding="utf-8")
 
     # Create routes
     print("[2/5] Creating example routes...")
@@ -96,7 +95,9 @@ def health(req):
 # Export urlpatterns for Django
 urlpatterns = app.get_urls()
 '''
-    (internal_dir / "routes" / "__init__.py").write_text(routes_content, encoding='utf-8')
+    (internal_dir / "routes" / "__init__.py").write_text(
+        routes_content, encoding="utf-8"
+    )
 
     # Create middleware
     middleware_content = '''"""Middleware"""
@@ -107,7 +108,9 @@ def logger(req, res, next):
     print(f"[{req.method}] {req.path}")
     return next()
 '''
-    (internal_dir / "middleware" / "logger.py").write_text(middleware_content, encoding='utf-8')
+    (internal_dir / "middleware" / "logger.py").write_text(
+        middleware_content, encoding="utf-8"
+    )
 
     # Update settings.py
     print("[3/5] Configuring Django settings...")
@@ -150,7 +153,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 '''
-    (config_dir / "settings.py").write_text(settings_content, encoding='utf-8')
+    (config_dir / "settings.py").write_text(settings_content, encoding="utf-8")
 
     # Update wsgi.py
     wsgi_content = f'''"""WSGI"""
@@ -161,7 +164,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "{project_name}.settings")
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 '''
-    (config_dir / "wsgi.py").write_text(wsgi_content, encoding='utf-8')
+    (config_dir / "wsgi.py").write_text(wsgi_content, encoding="utf-8")
 
     # Delete urls.py
     urls_file = config_dir / "urls.py"
@@ -190,7 +193,7 @@ def main():
 if __name__ == '__main__':
     main()
 '''
-    (project_dir / "manage.py").write_text(manage_content, encoding='utf-8')
+    (project_dir / "manage.py").write_text(manage_content, encoding="utf-8")
 
     # Create .env.example
     env_example = """# Django Settings
@@ -201,7 +204,7 @@ ALLOWED_HOSTS=*
 # Database (optional)
 # DATABASE_URL=postgresql://user:pass@localhost/dbname
 """
-    (project_dir / ".env.example").write_text(env_example, encoding='utf-8')
+    (project_dir / ".env.example").write_text(env_example, encoding="utf-8")
 
     # Create README
     print("[5/5] Creating documentation...")
@@ -240,12 +243,12 @@ sorm db push              # Update database
 └── dto/               # Data Transfer Objects
 ```
 """
-    (project_dir / "README.md").write_text(readme_content, encoding='utf-8')
+    (project_dir / "README.md").write_text(readme_content, encoding="utf-8")
 
     # Success message
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("SUCCESS! Project created")
-    print("="*50)
+    print("=" * 50)
     print(f"\nNext steps:")
     print(f"  cd {project_name}")
     print(f"  sorm db push              # Setup database")
@@ -277,7 +280,7 @@ def create_crud_endpoint():
     entity_dir = Path("entity")
     entity_dir.mkdir(exist_ok=True)
     if not (entity_dir / "__init__.py").exists():
-        (entity_dir / "__init__.py").write_text("", encoding='utf-8')
+        (entity_dir / "__init__.py").write_text("", encoding="utf-8")
 
     entity_file = entity_dir / f"{endpoint_name}.py"
     entity_content = f'''"""
@@ -301,18 +304,20 @@ class {model_name}(models.Model):
     def __str__(self):
         return self.title
 '''
-    entity_file.write_text(entity_content, encoding='utf-8')
+    entity_file.write_text(entity_content, encoding="utf-8")
 
     # Update models.py
     models_file = entity_dir / "models.py"
     if models_file.exists():
-        models_content = models_file.read_text(encoding='utf-8')
+        models_content = models_file.read_text(encoding="utf-8")
         import_line = f"from .{endpoint_name} import {model_name}"
         if import_line not in models_content:
             models_content += f"\n{import_line}\n"
-            models_file.write_text(models_content, encoding='utf-8')
+            models_file.write_text(models_content, encoding="utf-8")
     else:
-        models_file.write_text(f"from .{endpoint_name} import {model_name}\n", encoding='utf-8')
+        models_file.write_text(
+            f"from .{endpoint_name} import {model_name}\n", encoding="utf-8"
+        )
 
     # Create controller
     print("[2/3] Creating controller...")
@@ -402,7 +407,7 @@ def delete(req, id):
     except {model_name}.DoesNotExist:
         return Response().status_code(404).json({{"error": "Not found"}})
 '''
-    controller_file.write_text(controller_content, encoding='utf-8')
+    controller_file.write_text(controller_content, encoding="utf-8")
 
     # Create routes
     print("[3/3] Creating routes...")
@@ -445,11 +450,11 @@ def delete_{endpoint_name}(req, id):
 
 router.include(routes)
 '''
-    routes_file.write_text(routes_content, encoding='utf-8')
+    routes_file.write_text(routes_content, encoding="utf-8")
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("SUCCESS! CRUD created")
-    print("="*50)
+    print("=" * 50)
     print(f"\nFiles created:")
     print(f"  - entity/{endpoint_name}.py")
     print(f"  - internal/controller/{endpoint_name}.py")
@@ -918,7 +923,7 @@ def reset_password(req):
     })
 '''
 
-    (controller_dir / "auth.py").write_text(controller_content, encoding='utf-8')
+    (controller_dir / "auth.py").write_text(controller_content, encoding="utf-8")
 
     # Create routes
     print("[2/2] Creating auth routes...")
@@ -1024,12 +1029,12 @@ def reset_password(req):
 router.include(routes)
 '''
 
-    (routes_dir / "auth.py").write_text(routes_content, encoding='utf-8')
+    (routes_dir / "auth.py").write_text(routes_content, encoding="utf-8")
 
     # Success message
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("SUCCESS! Auth created")
-    print("="*50)
+    print("=" * 50)
     print(f"\nFiles created:")
     print(f"  - internal/controller/auth.py")
     print(f"  - internal/routes/auth.py")
@@ -1037,7 +1042,7 @@ router.include(routes)
     print(f"  1. Import in internal/routes/__init__.py:")
     print(f"     from . import auth")
     print(f"     app.include(auth.router)")
-    
+
     if is_simple:
         print(f"\nEndpoints:")
         print(f"  POST /api/auth/register   - Register user (returns JWT)")
@@ -1104,7 +1109,7 @@ def run_server():
         sys.exit(1)
 
     print("Starting development server...\n")
-    
+
     try:
         subprocess.run([sys.executable, "manage.py", "runserver"])
     except KeyboardInterrupt:
@@ -1145,7 +1150,6 @@ if __name__ == "__main__":
     main()
 
 
-
 # SORM CLI
 def sorm_main():
     """SORM CLI entry point"""
@@ -1159,7 +1163,7 @@ def sorm_main():
         if len(sys.argv) < 3:
             show_sorm_help()
             sys.exit(1)
-        
+
         subcommand = sys.argv[2]
         if subcommand == "push":
             sorm_db_push()
@@ -1185,9 +1189,7 @@ def sorm_db_push():
 
     print("[1/2] Creating migrations...")
     result = subprocess.run(
-        [sys.executable, "manage.py", "makemigrations"],
-        capture_output=True,
-        text=True
+        [sys.executable, "manage.py", "makemigrations"], capture_output=True, text=True
     )
 
     if result.returncode != 0:
@@ -1204,18 +1206,16 @@ def sorm_db_push():
 
     print("[2/2] Applying migrations...")
     result = subprocess.run(
-        [sys.executable, "manage.py", "migrate"],
-        capture_output=True,
-        text=True
+        [sys.executable, "manage.py", "migrate"], capture_output=True, text=True
     )
 
     if result.returncode == 0:
         for line in result.stdout.split("\n"):
             if "Applying" in line:
                 print(f"  {line.strip()}")
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("SUCCESS! Database updated")
-        print("="*50 + "\n")
+        print("=" * 50 + "\n")
     else:
         print("[ERROR] Failed to apply migrations")
         print(result.stderr)
@@ -1239,9 +1239,9 @@ def sorm_db_reset():
     result = subprocess.run([sys.executable, "manage.py", "flush", "--noinput"])
 
     if result.returncode == 0:
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("SUCCESS! Database reset")
-        print("="*50 + "\n")
+        print("=" * 50 + "\n")
     else:
         print("[ERROR] Failed to reset database")
         sys.exit(1)
@@ -1257,9 +1257,9 @@ def sorm_studio():
     result = subprocess.run([sys.executable, "manage.py", "createsuperuser"])
 
     if result.returncode == 0:
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("SUCCESS! Superuser created")
-        print("="*50)
+        print("=" * 50)
         print("\nStarting server...")
         print("Admin: http://127.0.0.1:8000/admin\n")
 

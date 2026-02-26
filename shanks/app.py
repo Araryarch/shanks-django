@@ -422,9 +422,9 @@ class App:
                         return methods_map[method]["view"](request, *args, **kwargs)
                     else:
                         return JsonResponse(
-                            {"error": f"Method {method} not allowed"},
-                            status=405
+                            {"error": f"Method {method} not allowed"}, status=405
                         )
+
                 return combined_view
 
             view = create_combined_view(methods_dict)
@@ -435,9 +435,7 @@ class App:
             if "<" in route_path:
                 # Convert to regex pattern with auto-type detection
                 django_pattern = self._convert_route_to_django(route_path)
-                patterns.append(
-                    re_path(f"^{django_pattern}$", view, name=name)
-                )
+                patterns.append(re_path(f"^{django_pattern}$", view, name=name))
             else:
                 # Simple path without parameters
                 patterns.append(path(route_path, view, name=name))
@@ -465,20 +463,20 @@ class App:
         return patterns
 
 
-def auto_discover_routes(routes_module='routes'):
+def auto_discover_routes(routes_module="routes"):
     """
     Auto-discover and combine all routers from a routes module/package
-    
+
     Args:
         routes_module: Module name (default: 'routes')
-    
+
     Returns:
         Combined urlpatterns from all routers
-        
+
     Example:
         # In your main urls.py:
         from shanks.app import auto_discover_routes
-        
+
         urlpatterns = [
             path('admin/', admin.site.urls),
         ] + auto_discover_routes('routes')
@@ -486,65 +484,65 @@ def auto_discover_routes(routes_module='routes'):
     import importlib
     import pkgutil
     from pathlib import Path
-    
+
     combined_patterns = []
-    
+
     try:
         # Import the routes module
         routes_pkg = importlib.import_module(routes_module)
         routes_path = Path(routes_pkg.__file__).parent
-        
+
         # Iterate through all Python files in the routes directory
         for importer, module_name, is_pkg in pkgutil.iter_modules([str(routes_path)]):
-            if module_name.startswith('_'):
+            if module_name.startswith("_"):
                 continue
-                
-            full_module_name = f'{routes_module}.{module_name}'
+
+            full_module_name = f"{routes_module}.{module_name}"
             try:
                 module = importlib.import_module(full_module_name)
-                
+
                 # Look for 'router' attribute
-                if hasattr(module, 'router'):
-                    router = getattr(module, 'router')
+                if hasattr(module, "router"):
+                    router = getattr(module, "router")
                     if isinstance(router, App):
                         combined_patterns.extend(router.get_urls())
                         print(f"✓ Loaded routes from {full_module_name}")
-                        
+
             except Exception as e:
                 print(f"✗ Error loading {full_module_name}: {e}")
-                
+
     except ImportError as e:
         print(f"✗ Could not import {routes_module}: {e}")
-        
+
     return combined_patterns
 
 
 def include_routers(*routers):
     """
     Combine multiple Shanks routers into Django urlpatterns
-    
+
     Args:
         *routers: Variable number of App instances
-        
+
     Returns:
         Combined urlpatterns
-        
+
     Example:
         # In your main urls.py:
         from shanks.app import include_routers
         from routes.task import router as task_router
         from routes.user import router as user_router
-        
+
         urlpatterns = [
             path('admin/', admin.site.urls),
         ] + include_routers(task_router, user_router)
     """
     combined_patterns = []
-    
+
     for router in routers:
         if isinstance(router, App):
             combined_patterns.extend(router.get_urls())
         else:
             print(f"Warning: {router} is not a Shanks App instance")
-            
+
     return combined_patterns

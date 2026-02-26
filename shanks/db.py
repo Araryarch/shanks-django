@@ -238,13 +238,13 @@ class MongoDB:
         if cls._db is None:
             raise RuntimeError("MongoDB not connected. Call MongoDB.connect() first.")
         return cls._db
-    
+
     # Backward compatibility properties
     @property
     def client(self):
         """Get MongoDB client (instance property for backward compatibility)"""
         return self.__class__.get_client()
-    
+
     @property
     def db(self):
         """Get MongoDB database (instance property for backward compatibility)"""
@@ -326,7 +326,7 @@ class Redis:
         if cls._client is None:
             raise RuntimeError("Redis not connected. Call Redis.connect() first.")
         return cls._client
-    
+
     # Backward compatibility property
     @property
     def client(self):

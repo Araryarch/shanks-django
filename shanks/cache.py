@@ -169,11 +169,11 @@ def auto_cache(req, res, next):
 
     # Execute next middleware/handler
     result = next()
-    
+
     # Cache the response with path for invalidation
     if result is not None:
         _cache.set(key, result, ttl=300, path=req.path)  # Pass path for tracking
-    
+
     return result
 
 
@@ -207,7 +207,7 @@ def smart_cache_invalidation(req, res, next):
     """
     # Execute the handler first
     result = next()
-    
+
     # Invalidate cache AFTER successful write operations
     if req.method in ["POST", "PUT", "PATCH", "DELETE"]:
         # Extract base resource path (e.g., /api/posts/123 -> /api/posts)
@@ -218,7 +218,7 @@ def smart_cache_invalidation(req, res, next):
             base_path = "/".join(path_parts[:-1])
         else:
             base_path = path
-        
+
         # Invalidate all cache entries for this resource
         invalidate_cache(base_path)
 
