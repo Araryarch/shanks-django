@@ -12,6 +12,7 @@ class SimpleCache:
     def __init__(self):
         self._cache = {}
         self._timestamps = {}
+        self._path_to_keys = {}  # Map paths to their cache keys
 
     def get(self, key):
         """Get value from cache if not expired"""
@@ -23,27 +24,48 @@ class SimpleCache:
                 # Expired, remove
                 del self._cache[key]
                 del self._timestamps[key]
+                # Clean up path mapping
+                for path, keys in list(self._path_to_keys.items()):
+                    if key in keys:
+                        keys.discard(key)
+                        if not keys:
+                            del self._path_to_keys[path]
         return None
 
-    def set(self, key, value, ttl=300):
+    def set(self, key, value, ttl=300, path=None):
         """Set value in cache with TTL (default 5 minutes)"""
         self._cache[key] = {"value": value, "ttl": ttl}
         self._timestamps[key] = time.time()
+        # Track which path this key belongs to
+        if path:
+            if path not in self._path_to_keys:
+                self._path_to_keys[path] = set()
+            self._path_to_keys[path].add(key)
 
     def delete(self, key):
         """Delete key from cache"""
         if key in self._cache:
             del self._cache[key]
             del self._timestamps[key]
+            # Clean up path mapping
+            for path, keys in list(self._path_to_keys.items()):
+                if key in keys:
+                    keys.discard(key)
+                    if not keys:
+                        del self._path_to_keys[path]
 
     def clear(self):
         """Clear all cache"""
         self._cache.clear()
         self._timestamps.clear()
+        self._path_to_keys.clear()
 
     def invalidate_pattern(self, pattern):
-        """Invalidate all keys matching pattern"""
-        keys_to_delete = [k for k in self._cache.keys() if pattern in k]
+        """Invalidate all keys for paths matching pattern"""
+        keys_to_delete = set()
+        for path, keys in list(self._path_to_keys.items()):
+            if pattern in path:
+                keys_to_delete.update(keys)
         for key in keys_to_delete:
             self.delete(key)
 
@@ -132,8 +154,7 @@ def auto_cache(req, res, next):
     """
     # Only cache GET requests
     if req.method != "GET":
-        next()
-        return
+        return next()
 
     # Generate cache key
     key = cache_key(req)
@@ -146,22 +167,14 @@ def auto_cache(req, res, next):
             res.headers["X-Cache"] = "HIT"
         return cached
 
-    # Store original response
-    original_response = [None]
-
-    def cache_response():
-        """Cache the response after next() completes"""
-        if original_response[0] is not None:
-            _cache.set(key, original_response[0], ttl=300)  # 5 minutes default
-
-    # Wrap next to capture response
-    def wrapped_next():
-        result = next()
-        original_response[0] = result
-        cache_response()
-        return result
-
-    return wrapped_next()
+    # Execute next middleware/handler
+    result = next()
+    
+    # Cache the response with path for invalidation
+    if result is not None:
+        _cache.set(key, result, ttl=300, path=req.path)  # Pass path for tracking
+    
+    return result
 
 
 def invalidate_cache(pattern=None):
@@ -192,17 +205,24 @@ def smart_cache_invalidation(req, res, next):
     Usage:
         app.use(smart_cache_invalidation)
     """
-    # Invalidate cache for write operations
+    # Execute the handler first
+    result = next()
+    
+    # Invalidate cache AFTER successful write operations
     if req.method in ["POST", "PUT", "PATCH", "DELETE"]:
-        # Extract resource path (e.g., /api/posts/123 -> /api/posts)
-        path_parts = req.path.split("/")
-        if len(path_parts) > 2:
-            resource_path = (
-                "/".join(path_parts[:-1]) if path_parts[-1].isdigit() else req.path
-            )
-            invalidate_cache(resource_path)
+        # Extract base resource path (e.g., /api/posts/123 -> /api/posts)
+        path = req.path
+        # Remove trailing ID if present (e.g., /api/posts/123 -> /api/posts)
+        path_parts = path.rstrip("/").split("/")
+        if path_parts and path_parts[-1].isdigit():
+            base_path = "/".join(path_parts[:-1])
+        else:
+            base_path = path
+        
+        # Invalidate all cache entries for this resource
+        invalidate_cache(base_path)
 
-    next()
+    return result
 
 
 __all__ = [

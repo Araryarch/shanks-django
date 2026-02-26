@@ -91,43 +91,43 @@ PROTECT = models.PROTECT
 class UserManager:
     """User manager with Prisma-like syntax"""
 
-    @staticmethod
-    def _get_user_model():
+    @classmethod
+    def _get_user_model(cls):
         """Lazy import Django User"""
         from django.contrib.auth.models import User as DjangoUser
 
         return DjangoUser
 
-    @staticmethod
-    def find_many(**filters):
+    @classmethod
+    def find_many(cls, **filters):
         """Find many users"""
-        return UserManager._get_user_model().objects.filter(**filters)
+        return cls._get_user_model().objects.filter(**filters)
 
-    @staticmethod
-    def find_first(**filters):
+    @classmethod
+    def find_first(cls, **filters):
         """Find first user"""
-        return UserManager._get_user_model().objects.filter(**filters).first()
+        return cls._get_user_model().objects.filter(**filters).first()
 
-    @staticmethod
-    def find_unique(**filters):
+    @classmethod
+    def find_unique(cls, **filters):
         """Find unique user"""
-        DjangoUser = UserManager._get_user_model()
+        DjangoUser = cls._get_user_model()
         try:
             return DjangoUser.objects.get(**filters)
         except DjangoUser.DoesNotExist:
             return None
 
-    @staticmethod
-    def create(username, email, password, **kwargs):
+    @classmethod
+    def create(cls, username, email, password, **kwargs):
         """Create user"""
-        return UserManager._get_user_model().objects.create_user(
+        return cls._get_user_model().objects.create_user(
             username=username, email=email, password=password, **kwargs
         )
 
-    @staticmethod
-    def count(**filters):
+    @classmethod
+    def count(cls, **filters):
         """Count users"""
-        DjangoUser = UserManager._get_user_model()
+        DjangoUser = cls._get_user_model()
         if filters:
             return DjangoUser.objects.filter(**filters).count()
         return DjangoUser.objects.count()

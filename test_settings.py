@@ -3,6 +3,7 @@
 SECRET_KEY = "test-secret-key"
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
+ROOT_URLCONF = "tests.urls"
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",

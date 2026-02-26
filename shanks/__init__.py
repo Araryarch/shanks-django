@@ -1,4 +1,4 @@
-from .app import App
+from .app import App, auto_discover_routes, include_routers
 from .cors import CORS, enable_cors
 from .db import (
     DatabaseConfig,
@@ -21,7 +21,7 @@ from .cache import (
     get_cache,
 )
 
-__version__ = "0.1.5"
+__version__ = "0.2.3"
 __author__ = "Ararya"
 __email__ = "araryaarch@gmail.com"
 
@@ -88,6 +88,8 @@ def __getattr__(name):
 
 __all__ = [
     "App",
+    "auto_discover_routes",
+    "include_routers",
     "Request",
     "Response",
     "CORS",

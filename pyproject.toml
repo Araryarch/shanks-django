@@ -8,7 +8,7 @@ version = "0.2.3"
 description = "Express.js-like framework built on Django"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
 keywords = ["django", "express", "framework", "web", "api", "rest"]
 authors = [
   {name = "Ararya", email = "araryaarch@gmail.com"}
@@ -17,7 +17,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Topic :: Software Development :: Libraries :: Application Frameworks",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
@@ -32,12 +31,17 @@ classifiers = [
   "Framework :: Django :: 5.0",
 ]
 dependencies = [
-  "django>=3.2",
-  "black>=23.0.0",
-  "watchdog>=3.0.0"
+  "django>=3.2"
 ]
 
 [project.optional-dependencies]
+dev = [
+  "black>=23.0.0",
+  "watchdog>=3.0.0",
+  "flake8>=6.0.0",
+  "pytest>=7.0.0",
+  "pytest-django>=4.5.0"
+]
 postgres = ["psycopg2-binary>=2.9.0"]
 mysql = ["mysqlclient>=2.1.0"]
 mongodb = ["pymongo>=4.0.0"]
@@ -59,3 +63,9 @@ Homepage = "https://github.com/Araryarch/shanks-django"
 Documentation = "https://github.com/Araryarch/shanks-docs#readme"
 Repository = "https://github.com/Araryarch/shanks-django"
 "Bug Tracker" = "https://github.com/Araryarch/shanks-django/issues"
+
+[tool.setuptools]
+packages = ["shanks", "shanks.templates", "SORM"]
+
+[tool.setuptools.package-data]
+shanks = ["templates/*.html"]

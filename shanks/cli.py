@@ -1,219 +1,117 @@
-"""Shanks CLI commands"""
+"""Shanks CLI commands - Clean version"""
 
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 
-def format_code():
-    """Format code with black"""
-    try:
-        import black
-    except ImportError:
-        print("Installing black...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "black"])
-        import black
-
-    # Get current directory
-    cwd = Path.cwd()
-
-    # Format Python files
-    print("🎨 Formatting code with black...")
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "black",
-            ".",
-            "--exclude",
-            "/(\.venv|venv|env|\.git|__pycache__|\.pytest_cache|\.mypy_cache|build|dist|\.eggs)/",
-        ],
-        cwd=cwd,
-    )
-
-    if result.returncode == 0:
-        print("✨ Code formatted successfully!")
-    else:
-        print("❌ Formatting failed")
-        sys.exit(1)
+SHANKS_ASCII = r"""
+   _____ _                 _        
+  / ____| |               | |       
+ | (___ | |__   __ _ _ __ | | _____ 
+  \___ \| '_ \ / _` | '_ \| |/ / __|
+  ____) | | | | (_| | | | |   <\__ \
+ |_____/|_| |_|\__,_|_| |_|_|\_\___/
+                                    
+ Express.js-like framework for Django
+"""
 
 
-def lint_code():
-    """Lint code with flake8"""
-    try:
-        import flake8
-    except ImportError:
-        print("Installing flake8...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "flake8"])
-
-    print("🔍 Linting code with flake8...")
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "flake8",
-            ".",
-            "--exclude=.venv,venv,env,.git,__pycache__,.pytest_cache,.mypy_cache,build,dist,.eggs",
-            "--max-line-length=127",
-            "--extend-ignore=E203,W503",
-        ]
-    )
-
-    if result.returncode == 0:
-        print("✅ No linting errors!")
-    else:
-        print("⚠️  Linting issues found")
-        sys.exit(1)
-
-
-def run_server():
-    """Run Django development server with auto-reload (like nodemon)"""
-    try:
-        import watchdog
-    except ImportError:
-        print("Installing watchdog for auto-reload...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "watchdog"])
-
-    # Check if manage.py exists
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        print("Make sure you're in a Shanks project directory.")
-        sys.exit(1)
-
-    # Get host and port from args
-    host = "127.0.0.1"
-    port = "8000"
-
-    if len(sys.argv) > 2:
-        for arg in sys.argv[2:]:
-            if ":" in arg:
-                host, port = arg.split(":")
-            elif arg.isdigit():
-                port = arg
-
-    print(f"🚀 Starting Shanks development server...")
-    print(f"📡 Server running at http://{host}:{port}")
-    print(f"🔄 Auto-reload enabled")
-    print(f"⏹️  Press Ctrl+C to stop\n")
-
-    # Run Django development server with suppressed output
-    try:
-        # Suppress Django startup messages
-        env = os.environ.copy()
-        env["PYTHONUNBUFFERED"] = "1"
-
-        process = subprocess.Popen(
-            [sys.executable, "manage.py", "runserver", f"{host}:{port}", "--noreload"],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        )
-
-        # Filter output to only show relevant info
-        for line in process.stdout:
-            # Skip Django version and startup messages
-            if any(
-                skip in line
-                for skip in [
-                    "Watching for file changes",
-                    "Performing system checks",
-                    "System check identified",
-                    "Django version",
-                    "Starting development server",
-                    "Quit the server",
-                ]
-            ):
-                continue
-            # Show errors and important messages
-            if line.strip():
-                print(line.rstrip())
-
-        process.wait()
-    except KeyboardInterrupt:
-        print("\n\n⏹️  Server stopped")
-    except subprocess.CalledProcessError as e:
-        print(f"\n❌ Server error: {e}")
-        sys.exit(1)
+def print_banner():
+    """Print Shanks banner"""
+    print(SHANKS_ASCII)
 
 
 def create_project():
-    """Create a new Shanks Django project with Go-like architecture"""
+    """Create a new Shanks Django project"""
     if len(sys.argv) < 3:
         print("Usage: shanks new <project_name>")
         sys.exit(1)
 
     project_name = sys.argv[2]
-    print(f"🎉 Creating new Shanks project: {project_name}")
+    print_banner()
+    print(f"Creating new Shanks project: {project_name}\n")
 
     # Create Django project
     try:
-        subprocess.run(
-            [sys.executable, "-m", "django", "startproject", project_name], check=True
+        result = subprocess.run(
+            [sys.executable, "-m", "django", "startproject", project_name], 
+            check=False,
+            capture_output=True,
+            text=True
         )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print("❌ Django not found. Installing Django...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "django"])
-        subprocess.run(
-            [sys.executable, "-m", "django", "startproject", project_name], check=True
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(result.returncode, result.args)
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        print("[INFO] Installing Django...")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "django"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
+        result = subprocess.run(
+            [sys.executable, "-m", "django", "startproject", project_name], 
+            check=False,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"[ERROR] Failed to create project: {result.stderr}")
+            sys.exit(1)
 
     project_dir = Path(project_name)
     config_dir = project_dir / project_name
 
-    # Create Go-like architecture
+    # Create directory structure
+    print("[1/5] Creating directory structure...")
     internal_dir = project_dir / "internal"
     internal_dir.mkdir(exist_ok=True)
-    (internal_dir / "__init__.py").write_text("")
+    (internal_dir / "__init__.py").write_text("", encoding='utf-8')
 
-    # Create internal subdirectories
     for subdir in ["controller", "repository", "service", "middleware", "routes"]:
         dir_path = internal_dir / subdir
         dir_path.mkdir(exist_ok=True)
-        (dir_path / "__init__.py").write_text("")
+        (dir_path / "__init__.py").write_text("", encoding='utf-8')
 
-    # Create other directories
     for dir_name in ["dto", "entity", "config", "utils"]:
         dir_path = project_dir / dir_name
         dir_path.mkdir(exist_ok=True)
-        (dir_path / "__init__.py").write_text("")
+        (dir_path / "__init__.py").write_text("", encoding='utf-8')
 
-    # Create routes with example
-    routes_content = '''"""API Routes"""
-from shanks import App, swagger
+    # Create routes
+    print("[2/5] Creating example routes...")
+    routes_content = f'''"""API Routes"""
+from shanks import App
 
-app = App()  # Cache enabled by default!
-
-# Enable Swagger - applies to all endpoints!
-app.use(swagger(title="{project_name} API", version="1.0.0"))
+app = App()
 
 
 @app.get("api/health")
 def health(req):
-    """Health check"""
+    """Health check endpoint"""
     return {{"status": "ok", "service": "{project_name}"}}
 
 
-# urlpatterns auto-generated! ✨
-'''.format(project_name=project_name)
-    (internal_dir / "routes" / "__init__.py").write_text(routes_content)
+# Export urlpatterns for Django
+urlpatterns = app.get_urls()
+'''
+    (internal_dir / "routes" / "__init__.py").write_text(routes_content, encoding='utf-8')
 
-    # Create example middleware
+    # Create middleware
     middleware_content = '''"""Middleware"""
 
 
 def logger(req, res, next):
-    """Log all requests - Express.js style"""
-    print(f"[{{req.method}}] {{req.path}}")
-    next()
+    """Log all requests"""
+    print(f"[{req.method}] {req.path}")
+    return next()
 '''
-    (internal_dir / "middleware" / "logger.py").write_text(middleware_content)
+    (internal_dir / "middleware" / "logger.py").write_text(middleware_content, encoding='utf-8')
 
     # Update settings.py
-    settings_content = '''"""Shanks Django Settings"""
+    print("[3/5] Configuring Django settings...")
+    settings_content = f'''"""Django Settings"""
 
 from shanks import (
     get_base_dir,
@@ -227,97 +125,72 @@ from shanks import (
     get_password_validators,
 )
 
-# Paths
 BASE_DIR = get_base_dir(__file__)
-
-# Security
 SECRET_KEY = get_secret_key()
 DEBUG = get_debug()
 ALLOWED_HOSTS = get_allowed_hosts()
 
-# Apps
 INSTALLED_APPS = get_installed_apps(["internal", "entity", "dto"])
-
-# Middleware
 MIDDLEWARE = get_middleware()
-
-# Routing
 ROOT_URLCONF = "internal.routes"
-
-# Templates
 TEMPLATES = get_templates()
-
-# WSGI
 WSGI_APPLICATION = "{project_name}.wsgi.application"
-
-# Database
 DATABASES = get_database(BASE_DIR)
-
-# Password validation
 AUTH_PASSWORD_VALIDATORS = get_password_validators(DEBUG)
 
-# Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static & Media
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Default
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-'''.format(project_name=project_name)
-    (config_dir / "settings.py").write_text(settings_content)
+'''
+    (config_dir / "settings.py").write_text(settings_content, encoding='utf-8')
 
     # Update wsgi.py
-    wsgi_content = '''"""WSGI"""
+    wsgi_content = f'''"""WSGI"""
 
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "{project_name}.settings")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
-'''.format(project_name=project_name)
-    (config_dir / "wsgi.py").write_text(wsgi_content)
+'''
+    (config_dir / "wsgi.py").write_text(wsgi_content, encoding='utf-8')
 
     # Delete urls.py
     urls_file = config_dir / "urls.py"
     if urls_file.exists():
         urls_file.unlink()
 
-    # Override manage.py to suppress warnings
-    manage_content = '''#!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+    # Update manage.py
+    print("[4/5] Creating management scripts...")
+    manage_content = f'''#!/usr/bin/env python
+"""Django management utility"""
 import os
 import sys
-import warnings
 
 
 def main():
-    """Run administrative tasks."""
-    # Suppress sys.prefix warnings
-    warnings.filterwarnings("ignore", category=RuntimeWarning, module="site")
-    
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', '{project_name}.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
+            "Couldn't import Django. Are you sure it's installed?"
         ) from exc
     execute_from_command_line(sys.argv)
 
 
 if __name__ == '__main__':
     main()
-'''.format(project_name=project_name)
-    (project_dir / "manage.py").write_text(manage_content)
+'''
+    (project_dir / "manage.py").write_text(manage_content, encoding='utf-8')
 
     # Create .env.example
     env_example = """# Django Settings
@@ -328,85 +201,65 @@ ALLOWED_HOSTS=*
 # Database (optional)
 # DATABASE_URL=postgresql://user:pass@localhost/dbname
 """
-    (project_dir / ".env.example").write_text(env_example)
+    (project_dir / ".env.example").write_text(env_example, encoding='utf-8')
 
-    # Create README.md
-    readme_content = """# {project_name}
+    # Create README
+    print("[5/5] Creating documentation...")
+    readme_content = f"""# {project_name}
 
-Shanks Django project with Go-like architecture
-
-## Structure
-
-```
-{project_name}/
-├── internal/           # Internal application code
-│   ├── controller/    # HTTP handlers
-│   ├── repository/    # Data access layer
-│   ├── service/       # Business logic
-│   ├── middleware/    # Middleware functions
-│   └── routes/        # Route definitions
-├── entity/            # Database models
-├── dto/               # Data Transfer Objects
-├── config/            # Configuration files
-├── utils/             # Utility functions
-└── {project_name}/    # Django settings
-```
+Shanks Django project
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-pip install shanks-django
-
-# Copy environment file
+cd {project_name}
 cp .env.example .env
-
-# Run migrations
-python manage.py migrate
-
-# Start server
-python manage.py runserver
+sorm db push              # Setup database
+shanks run                # Start server
 ```
 
 Visit: http://127.0.0.1:8000/api/health
-Swagger: http://127.0.0.1:8000/docs
 
 ## Generate CRUD
 
 ```bash
 shanks create posts --crud
-shanks create auth --simple
+sorm db push              # Update database
 ```
-""".format(project_name=project_name)
-    (project_dir / "README.md").write_text(readme_content)
 
-    print(f"\n✅ Project created successfully!")
-    print(f"\n📁 Go-like architecture:")
-    print(f"  {project_name}/")
-    print(f"  ├── internal/")
-    print(f"  │   ├── controller/    # HTTP handlers")
-    print(f"  │   ├── repository/    # Data access")
-    print(f"  │   ├── service/       # Business logic")
-    print(f"  │   ├── middleware/    # Middleware")
-    print(f"  │   └── routes/        # Routes")
-    print(f"  ├── entity/            # Models")
-    print(f"  ├── dto/               # DTOs")
-    print(f"  ├── config/            # Config")
-    print(f"  └── utils/             # Utils")
-    print(f"\n🚀 Next steps:")
+## Structure
+
+```
+{project_name}/
+├── internal/
+│   ├── controller/    # HTTP handlers
+│   ├── routes/        # Route definitions
+│   ├── service/       # Business logic
+│   └── middleware/    # Middleware
+├── entity/            # Database models
+└── dto/               # Data Transfer Objects
+```
+"""
+    (project_dir / "README.md").write_text(readme_content, encoding='utf-8')
+
+    # Success message
+    print("\n" + "="*50)
+    print("SUCCESS! Project created")
+    print("="*50)
+    print(f"\nNext steps:")
     print(f"  cd {project_name}")
-    print(f"  cp .env.example .env")
-    print(f"  python manage.py migrate")
-    print(f"  python manage.py runserver")
-    print(f"\n🌐 Visit: http://127.0.0.1:8000/api/health")
-    print(f"\n📚 Swagger: http://127.0.0.1:8000/docs")
+    print(f"  sorm db push              # Setup database")
+    print(f"  shanks run                # Start server")
+    print(f"\nVisit: http://127.0.0.1:8000/api/health")
+    print(f"\nGenerate CRUD:")
+    print(f"  shanks create posts --crud")
+    print()
 
 
 def create_crud_endpoint():
-    """Create CRUD endpoint with Go-like architecture"""
+    """Create CRUD endpoint"""
     if len(sys.argv) < 3:
         print("Usage: shanks create <endpoint_name> --crud")
-        print("Example: shanks create posts --crud")
         sys.exit(1)
 
     endpoint_name = sys.argv[2]
@@ -414,32 +267,32 @@ def create_crud_endpoint():
     endpoint_plural = endpoint_name.lower()
 
     if not Path("manage.py").exists():
-        print("❌ Not in a Shanks project directory!")
+        print("[ERROR] Not in a Shanks project directory")
         sys.exit(1)
 
-    # Create entity (model) - use Django models directly
+    print(f"Creating CRUD for: {model_name}\n")
+
+    # Create entity
+    print("[1/3] Creating model...")
     entity_dir = Path("entity")
     entity_dir.mkdir(exist_ok=True)
     if not (entity_dir / "__init__.py").exists():
-        (entity_dir / "__init__.py").write_text("")
+        (entity_dir / "__init__.py").write_text("", encoding='utf-8')
 
     entity_file = entity_dir / f"{endpoint_name}.py"
     entity_content = f'''"""
-{model_name} Entity
+{model_name} Model
 """
 from django.db import models
 from django.contrib.auth.models import User
 
 
 class {model_name}(models.Model):
-    """
-{model_name} model
-    """
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="{endpoint_plural}")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         app_label = "entity"
@@ -447,48 +300,22 @@ class {model_name}(models.Model):
 
     def __str__(self):
         return self.title
-
-    # Prisma-like methods
-    @classmethod
-    def find_many(cls, **filters):
-        return cls.objects.filter(**filters)
-
-    @classmethod
-    def find_unique(cls, **filters):
-        try:
-            return cls.objects.get(**filters)
-        except cls.DoesNotExist:
-            return None
-
-    @classmethod
-    def count(cls, **filters):
-        if filters:
-            return cls.objects.filter(**filters).count()
-        return cls.objects.count()
-
-    def update_self(self, **data):
-        for key, value in data.items():
-            setattr(self, key, value)
-        self.save()
-        return self
-
-    def delete_self(self):
-        self.delete()
 '''
-    entity_file.write_text(entity_content)
+    entity_file.write_text(entity_content, encoding='utf-8')
 
-    # Update entity/models.py for Django auto-discovery
+    # Update models.py
     models_file = entity_dir / "models.py"
     if models_file.exists():
-        models_content = models_file.read_text()
+        models_content = models_file.read_text(encoding='utf-8')
         import_line = f"from .{endpoint_name} import {model_name}"
         if import_line not in models_content:
             models_content += f"\n{import_line}\n"
-            models_file.write_text(models_content)
+            models_file.write_text(models_content, encoding='utf-8')
     else:
-        models_file.write_text(f"from .{endpoint_name} import {model_name}\n")
+        models_file.write_text(f"from .{endpoint_name} import {model_name}\n", encoding='utf-8')
 
     # Create controller
+    print("[2/3] Creating controller...")
     controller_dir = Path("internal/controller")
     controller_file = controller_dir / f"{endpoint_name}.py"
     controller_content = f'''"""
@@ -504,8 +331,8 @@ def list_{endpoint_plural}(req):
     limit = int(req.query.get("limit", 10))
     offset = (page - 1) * limit
 
-    total = {model_name}.count()
-    items = {model_name}.find_many()[offset : offset + limit]
+    total = {model_name}.objects.count()
+    items = {model_name}.objects.all()[offset : offset + limit]
 
     return {{
         "data": [
@@ -513,7 +340,6 @@ def list_{endpoint_plural}(req):
                 "id": item.id,
                 "title": item.title,
                 "description": item.description,
-                "created_at": item.created_at.isoformat(),
             }}
             for item in items
         ],
@@ -523,16 +349,15 @@ def list_{endpoint_plural}(req):
 
 def get_by_id(req, id):
     """Get by ID"""
-    item = {model_name}.find_unique(id=id)
-    if not item:
+    try:
+        item = {model_name}.objects.get(id=id)
+        return {{
+            "id": item.id,
+            "title": item.title,
+            "description": item.description,
+        }}
+    except {model_name}.DoesNotExist:
         return Response().status_code(404).json({{"error": "Not found"}})
-    
-    return {{
-        "id": item.id,
-        "title": item.title,
-        "description": item.description,
-        "created_at": item.created_at.isoformat(),
-    }}
 
 
 def create(req):
@@ -554,16 +379,15 @@ def update(req, id):
     if not req.user.is_authenticated:
         return Response().status_code(401).json({{"error": "Auth required"}})
     
-    item = {model_name}.find_unique(id=id)
-    if not item:
+    try:
+        item = {model_name}.objects.get(id=id)
+        data = req.body
+        item.title = data.get("title", item.title)
+        item.description = data.get("description", item.description)
+        item.save()
+        return {{"message": "Updated"}}
+    except {model_name}.DoesNotExist:
         return Response().status_code(404).json({{"error": "Not found"}})
-    
-    data = req.body
-    item.update_self(
-        title=data.get("title", item.title),
-        description=data.get("description", item.description),
-    )
-    return {{"message": "Updated"}}
 
 
 def delete(req, id):
@@ -571,16 +395,17 @@ def delete(req, id):
     if not req.user.is_authenticated:
         return Response().status_code(401).json({{"error": "Auth required"}})
     
-    item = {model_name}.find_unique(id=id)
-    if not item:
+    try:
+        item = {model_name}.objects.get(id=id)
+        item.delete()
+        return {{"message": "Deleted"}}
+    except {model_name}.DoesNotExist:
         return Response().status_code(404).json({{"error": "Not found"}})
-    
-    item.delete_self()
-    return {{"message": "Deleted"}}
 '''
-    controller_file.write_text(controller_content)
+    controller_file.write_text(controller_content, encoding='utf-8')
 
-    # Create routes with grouping
+    # Create routes
+    print("[3/3] Creating routes...")
     routes_dir = Path("internal/routes")
     routes_file = routes_dir / f"{endpoint_name}.py"
     routes_content = f'''"""
@@ -589,834 +414,701 @@ def delete(req, id):
 from shanks import App
 from internal.controller import {endpoint_name} as controller
 
-# Create router
 router = App()
-
-# Group routes under /api/{endpoint_plural}
 routes = router.group('api/{endpoint_plural}')
 
 
 @routes.get('')
 def list_{endpoint_plural}(req):
-    """List all {endpoint_plural} with pagination"""
     return controller.list_{endpoint_plural}(req)
 
 
 @routes.get('<id>')
 def get_{endpoint_name}(req, id):
-    """Get {endpoint_name} by ID"""
     return controller.get_by_id(req, id)
 
 
 @routes.post('')
 def create_{endpoint_name}(req):
-    """Create new {endpoint_name}"""
     return controller.create(req)
 
 
 @routes.put('<id>')
 def update_{endpoint_name}(req, id):
-    """Update {endpoint_name}"""
     return controller.update(req, id)
 
 
 @routes.delete('<id>')
 def delete_{endpoint_name}(req, id):
-    """Delete {endpoint_name}"""
     return controller.delete(req, id)
 
 
-# Include group routes to router
 router.include(routes)
 '''
-    routes_file.write_text(routes_content)
+    routes_file.write_text(routes_content, encoding='utf-8')
 
-    print(f"\n✅ CRUD created!")
-    print(f"\n📁 Files:")
-    print(f"  ├── entity/{endpoint_name}.py")
-    print(f"  ├── internal/controller/{endpoint_name}.py")
-    print(f"  └── internal/routes/{endpoint_name}.py")
-    print(f"\n📝 Next steps:")
-    print(f"   1. Import in internal/routes/__init__.py:")
-    print(f"      from . import {endpoint_name}")
-    print(f"      app.include({endpoint_name}.router)")
-    print(f"   2. Run migrations:")
-    print(f"      sorm db push")
-    print(f"\n🎯 Endpoints:")
+    print("\n" + "="*50)
+    print("SUCCESS! CRUD created")
+    print("="*50)
+    print(f"\nFiles created:")
+    print(f"  - entity/{endpoint_name}.py")
+    print(f"  - internal/controller/{endpoint_name}.py")
+    print(f"  - internal/routes/{endpoint_name}.py")
+    print(f"\nNext steps:")
+    print(f"  1. Import in internal/routes/__init__.py:")
+    print(f"     from . import {endpoint_name}")
+    print(f"     app.include({endpoint_name}.router)")
+    print(f"  2. Update database:")
+    print(f"     sorm db push")
+    print(f"\nEndpoints:")
     print(f"  GET    /api/{endpoint_plural}")
     print(f"  GET    /api/{endpoint_plural}/<id>")
     print(f"  POST   /api/{endpoint_plural}")
     print(f"  PUT    /api/{endpoint_plural}/<id>")
     print(f"  DELETE /api/{endpoint_plural}/<id>")
+    print()
 
 
-def create_auth_endpoint():
+def create_auth():
     """Create authentication endpoints"""
-    if len(sys.argv) < 4:
-        print("Usage: shanks create auth --simple|--complete")
-        sys.exit(1)
-
-    auth_type = sys.argv[3]
-    if auth_type not in ["--simple", "--complete"]:
-        print("❌ Use --simple or --complete")
-        sys.exit(1)
-
     if not Path("manage.py").exists():
-        print("❌ Not in a Shanks project!")
+        print("[ERROR] Not in a Shanks project directory")
         sys.exit(1)
 
-    routes_dir = Path("internal/routes")
-    auth_file = routes_dir / "auth.py"
+    # Check for --simple flag
+    is_simple = "--simple" in sys.argv
 
-    if auth_type == "--simple":
-        auth_content = '''"""Auth Routes - Simple"""
-from shanks import App, Response
-from SORM import User, authenticate
+    print(f"Creating {'simple' if is_simple else 'complete'} authentication...\n")
 
-# Create router
-router = App()
+    # Create controller
+    print("[1/2] Creating auth controller...")
+    controller_dir = Path("internal/controller")
+    controller_dir.mkdir(parents=True, exist_ok=True)
 
-# Group auth routes under /api/auth
-auth = router.group('api/auth')
+    if is_simple:
+        # Simple auth without email verification
+        controller_content = '''"""
+Auth Controller - Simple JWT authentication without SMTP
+"""
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.conf import settings
+from shanks import Response
+import jwt
+import datetime
 
 
-@auth.post('register')
+def _generate_token(user):
+    """Generate JWT token for user"""
+    secret = getattr(settings, 'SECRET_KEY', 'your-secret-key')
+    payload = {
+        'user_id': user.id,
+        'username': user.username,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
+        'iat': datetime.datetime.utcnow()
+    }
+    return jwt.encode(payload, secret, algorithm='HS256')
+
+
+def _decode_token(token):
+    """Decode JWT token"""
+    try:
+        secret = getattr(settings, 'SECRET_KEY', 'your-secret-key')
+        payload = jwt.decode(token, secret, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
 def register(req):
-    """Register new user"""
+    """
+    Simple registration without email verification
+    
+    Body: {
+        "username": "string",
+        "password": "string",
+        "email": "string" (optional)
+    }
+    """
     data = req.body
+    
     username = data.get("username")
-    email = data.get("email")
     password = data.get("password")
+    email = data.get("email", "")
+    
+    if not username or not password:
+        return Response().status_code(400).json({
+            "error": "Username and password required"
+        })
+    
+    # Check if user exists
+    if User.objects.filter(username=username).exists():
+        return Response().status_code(400).json({
+            "error": "Username already exists"
+        })
+    
+    # Create user
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        email=email
+    )
+    
+    # Generate token
+    token = _generate_token(user)
+    
+    return Response().status_code(201).json({
+        "message": "User created successfully",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    })
 
-    if not username or not email or not password:
-        return Response().status_code(400).json({"error": "All fields required"})
 
-    if User.find_unique(username=username):
-        return Response().status_code(400).json({"error": "Username exists"})
-
-    user = User.create(username=username, email=email, password=password)
-    return Response().status_code(201).json({"message": "Registered", "user_id": user.id})
-
-
-@auth.post('login')
-def login(req):
-    """Login user"""
+def login_user(req):
+    """
+    Simple login with JWT
+    
+    Body: {
+        "username": "string",
+        "password": "string"
+    }
+    """
     data = req.body
-    user = authenticate(username=data.get("username"), password=data.get("password"))
     
-    if not user:
-        return Response().status_code(401).json({"error": "Invalid credentials"})
+    username = data.get("username")
+    password = data.get("password")
     
-    return {"message": "Login successful", "user_id": user.id}
-
-
-@auth.get('me')
-def get_me(req):
-    """Get current user"""
-    if not req.user.is_authenticated:
-        return Response().status_code(401).json({"error": "Not authenticated"})
+    if not username or not password:
+        return Response().status_code(400).json({
+            "error": "Username and password required"
+        })
     
-    return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
+    # Authenticate
+    user = authenticate(req.django, username=username, password=password)
+    
+    if user is None:
+        return Response().status_code(401).json({
+            "error": "Invalid credentials"
+        })
+    
+    # Generate JWT token
+    token = _generate_token(user)
+    
+    return Response().status_code(200).json({
+        "message": "Login successful",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    })
 
 
-# Include group routes to router
-router.include(auth)
+def logout_user(req):
+    """
+    Logout (client should delete token)
+    Note: JWT is stateless, so logout is handled client-side
+    """
+    return Response().status_code(200).json({
+        "message": "Logout successful. Please delete your token."
+    })
+
+
+def me(req):
+    """
+    Get current user info from JWT token
+    
+    Headers: {
+        "Authorization": "Bearer <token>"
+    }
+    """
+    # Get token from Authorization header
+    auth_header = req.headers.get('Authorization', '')
+    
+    if not auth_header.startswith('Bearer '):
+        return Response().status_code(401).json({
+            "error": "Authorization header required (Bearer token)"
+        })
+    
+    token = auth_header.replace('Bearer ', '')
+    payload = _decode_token(token)
+    
+    if not payload:
+        return Response().status_code(401).json({
+            "error": "Invalid or expired token"
+        })
+    
+    try:
+        user = User.objects.get(id=payload['user_id'])
+        return Response().status_code(200).json({
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser
+            }
+        })
+    except User.DoesNotExist:
+        return Response().status_code(401).json({
+            "error": "User not found"
+        })
+
+
+def refresh_token(req):
+    """
+    Refresh JWT token
+    
+    Headers: {
+        "Authorization": "Bearer <token>"
+    }
+    """
+    auth_header = req.headers.get('Authorization', '')
+    
+    if not auth_header.startswith('Bearer '):
+        return Response().status_code(401).json({
+            "error": "Authorization header required"
+        })
+    
+    token = auth_header.replace('Bearer ', '')
+    payload = _decode_token(token)
+    
+    if not payload:
+        return Response().status_code(401).json({
+            "error": "Invalid or expired token"
+        })
+    
+    try:
+        user = User.objects.get(id=payload['user_id'])
+        new_token = _generate_token(user)
+        
+        return Response().status_code(200).json({
+            "message": "Token refreshed",
+            "token": new_token
+        })
+    except User.DoesNotExist:
+        return Response().status_code(401).json({
+            "error": "User not found"
+        })
 '''
-    else:  # --complete
-        auth_content = '''"""Auth Routes - Complete"""
-from shanks import App, Response
-from SORM import User, authenticate
+    else:
+        # Complete auth with email verification (requires SMTP)
+        controller_content = '''"""
+Auth Controller - Complete authentication with email verification
+"""
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.conf import settings
+from shanks import Response
+import secrets
 
-# Create router
-router = App()
 
-# Group auth routes under /api/auth
-auth = router.group('api/auth')
+# In-memory token storage (use Redis in production)
+_verification_tokens = {}
+_reset_tokens = {}
 
 
-@auth.post('register')
 def register(req):
-    """Register new user"""
-    data = req.body
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-
-    if not username or not email or not password:
-        return Response().status_code(400).json({"error": "All fields required"})
-
-    if User.find_unique(username=username):
-        return Response().status_code(400).json({"error": "Username exists"})
-
-    user = User.create(username=username, email=email, password=password, is_active=False)
-    # TODO: Send verification email
-    return Response().status_code(201).json({"message": "Check email to verify"})
-
-
-@auth.post('verify')
-def verify_email(req):
-    """Verify email"""
-    token = req.body.get("token")
-    # TODO: Implement verification
-    return {"message": "Email verified"}
-
-
-@auth.post('login')
-def login(req):
-    """Login user"""
-    data = req.body
-    user = authenticate(username=data.get("username"), password=data.get("password"))
+    """
+    Register with email verification
     
-    if not user:
-        return Response().status_code(401).json({"error": "Invalid credentials"})
+    Body: {
+        "username": "string",
+        "password": "string",
+        "email": "string"
+    }
+    """
+    data = req.body
+    
+    username = data.get("username")
+    password = data.get("password")
+    email = data.get("email")
+    
+    if not username or not password or not email:
+        return Response().status_code(400).json({
+            "error": "Username, password, and email required"
+        })
+    
+    if User.objects.filter(username=username).exists():
+        return Response().status_code(400).json({
+            "error": "Username already exists"
+        })
+    
+    if User.objects.filter(email=email).exists():
+        return Response().status_code(400).json({
+            "error": "Email already exists"
+        })
+    
+    # Create inactive user
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        email=email,
+        is_active=False
+    )
+    
+    # Generate verification token
+    token = secrets.token_urlsafe(32)
+    _verification_tokens[token] = user.id
+    
+    # Send verification email
+    verification_url = f"{settings.SITE_URL}/api/auth/verify?token={token}"
+    send_mail(
+        "Verify your email",
+        f"Click to verify: {verification_url}",
+        settings.DEFAULT_FROM_EMAIL,
+        [email],
+        fail_silently=False,
+    )
+    
+    return Response().status_code(201).json({
+        "message": "User created. Check email for verification link."
+    })
+
+
+def verify_email(req):
+    """Verify email with token"""
+    token = req.query.get("token")
+    
+    if not token or token not in _verification_tokens:
+        return Response().status_code(400).json({
+            "error": "Invalid or expired token"
+        })
+    
+    user_id = _verification_tokens.pop(token)
+    user = User.objects.get(id=user_id)
+    user.is_active = True
+    user.save()
+    
+    return Response().status_code(200).json({
+        "message": "Email verified successfully"
+    })
+
+
+def login_user(req):
+    """Login"""
+    data = req.body
+    
+    username = data.get("username")
+    password = data.get("password")
+    
+    if not username or not password:
+        return Response().status_code(400).json({
+            "error": "Username and password required"
+        })
+    
+    user = authenticate(req.django, username=username, password=password)
+    
+    if user is None:
+        return Response().status_code(401).json({
+            "error": "Invalid credentials"
+        })
     
     if not user.is_active:
-        return Response().status_code(403).json({"error": "Account not verified"})
+        return Response().status_code(401).json({
+            "error": "Email not verified"
+        })
     
-    return {"message": "Login successful", "user_id": user.id}
+    login(req.django, user)
+    
+    return Response().status_code(200).json({
+        "message": "Login successful",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    })
 
 
-@auth.get('me')
-def get_me(req):
+def logout_user(req):
+    """Logout"""
+    if not req.user.is_authenticated:
+        return Response().status_code(401).json({
+            "error": "Not authenticated"
+        })
+    
+    logout(req.django)
+    
+    return Response().status_code(200).json({
+        "message": "Logout successful"
+    })
+
+
+def me(req):
     """Get current user"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json({"error": "Not authenticated"})
+        return Response().status_code(401).json({
+            "error": "Not authenticated"
+        })
     
-    return {"id": req.user.id, "username": req.user.username, "email": req.user.email}
-
-
-# Include group routes to router
-router.include(auth)
-'''
-
-    auth_file.write_text(auth_content)
-
-    endpoints = ["POST /api/auth/register", "POST /api/auth/login", "GET  /api/auth/me"]
-    if auth_type == "--complete":
-        endpoints.insert(2, "POST /api/auth/verify")
-
-    print(f"\n✅ Auth created!")
-    print(f"\n📁 File: internal/routes/auth.py")
-    print(f"\n📝 Import in internal/routes/__init__.py:")
-    print(f"   from . import auth")
-    print(f"   app.include(auth.router)")
-    print(f"\n🎯 Endpoints:")
-    for e in endpoints:
-        print(f"  {e}")
-
-
-def sorm_make():
-    """Create migrations (like makemigrations)"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("🔨 Creating migrations...")
-
-    # Suppress Django output
-    result = subprocess.run(
-        [sys.executable, "manage.py", "makemigrations"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-
-    if result.returncode == 0:
-        # Only show relevant output
-        output = result.stdout
-        if "No changes detected" in output:
-            print("✅ No changes detected")
-        else:
-            # Show migration files created
-            for line in output.split("\n"):
-                if (
-                    "Migrations for" in line
-                    or "Create model" in line
-                    or "Add field" in line
-                    or "Alter field" in line
-                ):
-                    print(f"  {line.strip()}")
-            print("✅ Migrations created!")
-    else:
-        print("❌ Failed to create migrations")
-        print(result.stderr)
-        sys.exit(1)
-
-
-def sorm_db_migrate():
-    """Apply migrations to database"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("🚀 Applying migrations...")
-
-    result = subprocess.run(
-        [sys.executable, "manage.py", "migrate"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-
-    if result.returncode == 0:
-        # Only show relevant output
-        output = result.stdout
-        for line in output.split("\n"):
-            if "Applying" in line or "No migrations" in line:
-                print(f"  {line.strip()}")
-        print("✅ Migrations applied!")
-    else:
-        print("❌ Failed to apply migrations")
-        print(result.stderr)
-        sys.exit(1)
-
-
-def sorm_db_push():
-    """Create and apply migrations in one step"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("🔨 Creating migrations...")
-    result = subprocess.run(
-        [sys.executable, "manage.py", "makemigrations"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        print("❌ Failed to create migrations")
-        print(result.stderr)
-        sys.exit(1)
-
-    output = result.stdout
-    if "No changes detected" in output:
-        print("✅ No changes detected")
-    else:
-        for line in output.split("\n"):
-            if "Migrations for" in line or "Create model" in line:
-                print(f"  {line.strip()}")
-        print("✅ Migrations created!")
-
-    print("🚀 Applying migrations...")
-    result = subprocess.run(
-        [sys.executable, "manage.py", "migrate"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-
-    if result.returncode == 0:
-        output = result.stdout
-        for line in output.split("\n"):
-            if "Applying" in line:
-                print(f"  {line.strip()}")
-        print("✅ Database updated!")
-    else:
-        print("❌ Failed to apply migrations")
-        print(result.stderr)
-        sys.exit(1)
-
-
-def sorm_db_reset():
-    """Reset database (flush all data)"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("⚠️  This will delete all data!")
-    confirm = input("Type 'yes' to confirm: ")
-
-    if confirm.lower() != "yes":
-        print("❌ Cancelled")
-        sys.exit(0)
-
-    print("🗑️  Flushing database...")
-    result = subprocess.run([sys.executable, "manage.py", "flush", "--noinput"])
-
-    if result.returncode == 0:
-        print("✅ Database reset!")
-    else:
-        print("❌ Failed to reset database")
-        sys.exit(1)
-
-
-def sorm_db_shell():
-    """Open database shell"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("🐚 Opening database shell...")
-    subprocess.run([sys.executable, "manage.py", "dbshell"])
-
-
-def sorm_studio():
-    """Open Django admin (like Prisma Studio)"""
-    if not Path("manage.py").exists():
-        print("❌ manage.py not found!")
-        sys.exit(1)
-
-    print("🎨 Creating superuser for admin...")
-    print("📝 Follow the prompts:\n")
-
-    result = subprocess.run([sys.executable, "manage.py", "createsuperuser"])
-
-    if result.returncode == 0:
-        print("\n✅ Superuser created!")
-        print("🚀 Starting Shanks server...")
-        print("📊 Admin: http://127.0.0.1:8000/admin\n")
-
-        try:
-            subprocess.run([sys.executable, "manage.py", "runserver"])
-        except KeyboardInterrupt:
-            print("\n⏹️  Server stopped")
-
-
-def show_sorm_help():
-    """Show SORM help message"""
-    help_text = """
-SORM - Shanks ORM CLI (Prisma-like)
-
-Usage:
-    sorm <command> [options]
-
-Commands:
-    make                         Create migrations
-                                 Like: prisma migrate dev --create-only
-
-    db migrate                   Apply migrations to database
-                                 Like: prisma migrate deploy
-
-    db push                      Create and apply migrations (recommended)
-                                 Like: prisma db push
-
-    db reset                     Reset database (flush all data)
-                                 Requires confirmation
-
-    db shell                     Open interactive database shell
-
-    studio                       Create superuser and open admin panel
-                                 Like: prisma studio
-
-Examples:
-    sorm make                    # Create migrations
-    sorm db migrate              # Apply migrations
-    sorm db push                 # Create + apply (one command)
-    sorm db reset                # Reset database
-    sorm studio                  # Open admin panel
-"""
-    print(help_text)
-
-
-def generate_django_structure():
-    """Generate full Django project structure from Shanks project"""
-    if not Path("manage.py").exists():
-        print("❌ Not in a Shanks project directory!")
-        print("Run this command from your Shanks project root.")
-        sys.exit(1)
-
-    print("🔨 Generating full Django structure...")
-    print(
-        "This will create a 'django_output' directory with standard Django structure.\n"
-    )
-
-    # Create output directory
-    output_dir = Path("django_output")
-    if output_dir.exists():
-        print("⚠️  django_output directory already exists!")
-        confirm = input("Overwrite? (yes/no): ")
-        if confirm.lower() != "yes":
-            print("❌ Cancelled")
-            sys.exit(0)
-        import shutil
-
-        shutil.rmtree(output_dir)
-
-    output_dir.mkdir()
-
-    # Detect project name from settings
-    settings_files = list(Path(".").glob("*/settings.py"))
-    if not settings_files:
-        print("❌ Could not find Django settings.py!")
-        sys.exit(1)
-
-    project_name = settings_files[0].parent.name
-    print(f"📦 Project name: {project_name}")
-
-    # Create Django project structure
-    project_dir = output_dir / project_name
-    project_dir.mkdir()
-
-    # Copy settings.py
-    print("📄 Copying settings.py...")
-    settings_src = Path(project_name) / "settings.py"
-    settings_dst = project_dir / "settings.py"
-    if settings_src.exists():
-        import shutil
-
-        shutil.copy2(settings_src, settings_dst)
-
-    # Copy wsgi.py
-    print("📄 Copying wsgi.py...")
-    wsgi_src = Path(project_name) / "wsgi.py"
-    wsgi_dst = project_dir / "wsgi.py"
-    if wsgi_src.exists():
-        import shutil
-
-        shutil.copy2(wsgi_src, wsgi_dst)
-
-    # Copy asgi.py if exists
-    asgi_src = Path(project_name) / "asgi.py"
-    if asgi_src.exists():
-        print("📄 Copying asgi.py...")
-        import shutil
-
-        shutil.copy2(asgi_src, project_dir / "asgi.py")
-
-    # Create __init__.py
-    (project_dir / "__init__.py").write_text("")
-
-    # Generate urls.py from Shanks routes
-    print("🔗 Generating urls.py from Shanks routes...")
-    urls_content = generate_urls_from_shanks(project_name)
-    (project_dir / "urls.py").write_text(urls_content)
-
-    # Copy all apps (entity, dto, internal, etc.)
-    print("📦 Copying application modules...")
-    for app_dir in ["entity", "dto", "internal", "config", "utils"]:
-        src = Path(app_dir)
-        if src.exists() and src.is_dir():
-            import shutil
-
-            dst = output_dir / app_dir
-            shutil.copytree(src, dst)
-            print(f"  ✓ {app_dir}/")
-
-    # Copy manage.py
-    print("📄 Copying manage.py...")
-    manage_src = Path("manage.py")
-    if manage_src.exists():
-        import shutil
-
-        shutil.copy2(manage_src, output_dir / "manage.py")
-
-    # Copy migrations
-    print("📦 Copying migrations...")
-    for app_dir in ["entity", "internal"]:
-        migrations_src = Path(app_dir) / "migrations"
-        if migrations_src.exists():
-            import shutil
-
-            migrations_dst = output_dir / app_dir / "migrations"
-            if not migrations_dst.parent.exists():
-                migrations_dst.parent.mkdir(parents=True)
-            shutil.copytree(migrations_src, migrations_dst, dirs_exist_ok=True)
-            print(f"  ✓ {app_dir}/migrations/")
-
-    # Copy static and media if exists
-    for dir_name in ["static", "staticfiles", "media"]:
-        src = Path(dir_name)
-        if src.exists():
-            import shutil
-
-            dst = output_dir / dir_name
-            shutil.copytree(src, dst)
-            print(f"  ✓ {dir_name}/")
-
-    # Copy templates if exists
-    templates_src = Path("templates")
-    if templates_src.exists():
-        import shutil
-
-        shutil.copytree(templates_src, output_dir / "templates")
-        print(f"  ✓ templates/")
-
-    # Copy .env files
-    for env_file in [".env", ".env.example"]:
-        src = Path(env_file)
-        if src.exists():
-            import shutil
-
-            shutil.copy2(src, output_dir / env_file)
-            print(f"  ✓ {env_file}")
-
-    # Copy requirements files
-    for req_file in ["requirements.txt", "requirements-dev.txt"]:
-        src = Path(req_file)
-        if src.exists():
-            import shutil
-
-            shutil.copy2(src, output_dir / req_file)
-            print(f"  ✓ {req_file}")
-
-    # Generate README for Django output
-    readme_content = f"""# {project_name} - Django Structure
-
-This is the standard Django structure generated from your Shanks project.
-
-## Structure
-
-```
-{project_name}/
-├── {project_name}/        # Django settings
-│   ├── settings.py
-│   ├── urls.py           # Generated from Shanks routes
-│   └── wsgi.py
-├── entity/               # Django models
-├── internal/             # Application code
-├── manage.py
-└── requirements.txt
-```
-
-## Deployment
-
-This structure is ready for standard Django deployment:
-
-### Using Gunicorn
-
-```bash
-pip install gunicorn
-gunicorn {project_name}.wsgi:application
-```
-
-### Using uWSGI
-
-```bash
-pip install uwsgi
-uwsgi --http :8000 --module {project_name}.wsgi
-```
-
-### Using Docker
-
-```dockerfile
-FROM python:3.11
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["gunicorn", "{project_name}.wsgi:application", "--bind", "0.0.0.0:8000"]
-```
-
-### Environment Variables
-
-Make sure to set:
-- `SECRET_KEY`
-- `DEBUG=False` (for production)
-- `ALLOWED_HOSTS`
-- Database settings
-
-## Running Locally
-
-```bash
-python manage.py migrate
-python manage.py runserver
-```
-
-## Comparison with Shanks
-
-- Shanks version: Uses `internal/routes/__init__.py` with auto-generated urlpatterns
-- Django version: Uses `{project_name}/urls.py` with explicit URL patterns
-
-Both versions are functionally identical, but the Django version is more familiar
-for traditional Django deployment tools and hosting platforms.
-"""
-    (output_dir / "README.md").write_text(readme_content)
-
-    print("\n✅ Django structure generated successfully!")
-    print(f"\n📁 Output directory: django_output/")
-    print(f"\n📋 Structure:")
-    print(f"  django_output/")
-    print(f"  ├── {project_name}/")
-    print(f"  │   ├── settings.py")
-    print(f"  │   ├── urls.py        # Generated from Shanks routes")
-    print(f"  │   └── wsgi.py")
-    print(f"  ├── entity/            # Your models")
-    print(f"  ├── internal/          # Your app code")
-    print(f"  ├── manage.py")
-    print(f"  └── README.md")
-    print(f"\n🚀 Ready for deployment!")
-    print(f"\n💡 Compare with your Shanks version:")
-    print(f"   diff -r . django_output/")
-
-
-def generate_urls_from_shanks(project_name):
-    """Generate Django urls.py from Shanks routes"""
-    # Try to import and inspect the routes
+    return Response().status_code(200).json({
+        "user": {
+            "id": req.user.id,
+            "username": req.user.username,
+            "email": req.user.email,
+            "is_staff": req.user.is_staff,
+            "is_superuser": req.user.is_superuser
+        }
+    })
+
+
+def forgot_password(req):
+    """Request password reset"""
+    data = req.body
+    email = data.get("email")
+    
+    if not email:
+        return Response().status_code(400).json({
+            "error": "Email required"
+        })
+    
     try:
-        import sys
-        import importlib.util
+        user = User.objects.get(email=email)
+        token = secrets.token_urlsafe(32)
+        _reset_tokens[token] = user.id
+        
+        reset_url = f"{settings.SITE_URL}/api/auth/reset-password?token={token}"
+        send_mail(
+            "Reset your password",
+            f"Click to reset: {reset_url}",
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+    except User.DoesNotExist:
+        pass  # Don't reveal if email exists
+    
+    return Response().status_code(200).json({
+        "message": "If email exists, reset link sent"
+    })
 
-        # Add current directory to path
-        sys.path.insert(0, str(Path.cwd()))
 
-        # Try to load routes module
-        routes_path = Path("internal/routes/__init__.py")
-        if not routes_path.exists():
-            # Fallback to basic urls.py
-            return f'''"""
-URL Configuration for {project_name}
-Generated from Shanks routes
-"""
-from django.contrib import admin
-from django.urls import path, include
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    # Add your URL patterns here
-]
+def reset_password(req):
+    """Reset password with token"""
+    data = req.body
+    token = data.get("token")
+    new_password = data.get("password")
+    
+    if not token or not new_password:
+        return Response().status_code(400).json({
+            "error": "Token and password required"
+        })
+    
+    if token not in _reset_tokens:
+        return Response().status_code(400).json({
+            "error": "Invalid or expired token"
+        })
+    
+    user_id = _reset_tokens.pop(token)
+    user = User.objects.get(id=user_id)
+    user.set_password(new_password)
+    user.save()
+    
+    return Response().status_code(200).json({
+        "message": "Password reset successful"
+    })
 '''
 
-        # Load the routes module
-        spec = importlib.util.spec_from_file_location("routes", routes_path)
-        routes_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(routes_module)
+    (controller_dir / "auth.py").write_text(controller_content, encoding='utf-8')
 
-        # Get the app instance
-        if hasattr(routes_module, "app"):
-            app = routes_module.app
-            # Get URL patterns from app
-            urlpatterns = app.get_urls()
+    # Create routes
+    print("[2/2] Creating auth routes...")
+    routes_dir = Path("internal/routes")
+    routes_dir.mkdir(parents=True, exist_ok=True)
 
-            # Generate urls.py content
-            urls_content = f'''"""
-URL Configuration for {project_name}
-Generated from Shanks routes
+    if is_simple:
+        routes_content = '''"""
+Auth Routes - Simple JWT authentication
 """
-from django.contrib import admin
-from django.urls import path, include
+from shanks import App
+from internal.controller import auth as controller
 
-# Import your routes
-from internal.routes import app
+router = App()
+routes = router.group('api/auth')
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
 
-# Add Shanks routes
-urlpatterns += app.get_urls()
+@routes.post('register')
+def register(req):
+    """Register new user"""
+    return controller.register(req)
+
+
+@routes.post('login')
+def login_user(req):
+    """Login user"""
+    return controller.login_user(req)
+
+
+@routes.post('logout')
+def logout_user(req):
+    """Logout user"""
+    return controller.logout_user(req)
+
+
+@routes.get('me')
+def me(req):
+    """Get current user"""
+    return controller.me(req)
+
+
+@routes.post('refresh')
+def refresh_token(req):
+    """Refresh JWT token"""
+    return controller.refresh_token(req)
+
+
+router.include(routes)
 '''
-            return urls_content
-
-    except Exception as e:
-        print(f"⚠️  Could not auto-generate URLs: {e}")
-        print("   Creating basic urls.py template...")
-
-    # Fallback template
-    return f'''"""
-URL Configuration for {project_name}
-Generated from Shanks routes
+    else:
+        routes_content = '''"""
+Auth Routes - Complete authentication
 """
-from django.contrib import admin
-from django.urls import path, include
+from shanks import App
+from internal.controller import auth as controller
 
-# Import your routes
-from internal.routes import app
+router = App()
+routes = router.group('api/auth')
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
 
-# Add Shanks routes
-urlpatterns += app.get_urls()
+@routes.post('register')
+def register(req):
+    """Register new user"""
+    return controller.register(req)
+
+
+@routes.get('verify')
+def verify_email(req):
+    """Verify email"""
+    return controller.verify_email(req)
+
+
+@routes.post('login')
+def login_user(req):
+    """Login user"""
+    return controller.login_user(req)
+
+
+@routes.post('logout')
+def logout_user(req):
+    """Logout user"""
+    return controller.logout_user(req)
+
+
+@routes.get('me')
+def me(req):
+    """Get current user"""
+    return controller.me(req)
+
+
+@routes.post('forgot-password')
+def forgot_password(req):
+    """Request password reset"""
+    return controller.forgot_password(req)
+
+
+@routes.post('reset-password')
+def reset_password(req):
+    """Reset password"""
+    return controller.reset_password(req)
+
+
+router.include(routes)
 '''
+
+    (routes_dir / "auth.py").write_text(routes_content, encoding='utf-8')
+
+    # Success message
+    print("\n" + "="*50)
+    print("SUCCESS! Auth created")
+    print("="*50)
+    print(f"\nFiles created:")
+    print(f"  - internal/controller/auth.py")
+    print(f"  - internal/routes/auth.py")
+    print(f"\nNext steps:")
+    print(f"  1. Import in internal/routes/__init__.py:")
+    print(f"     from . import auth")
+    print(f"     app.include(auth.router)")
+    
+    if is_simple:
+        print(f"\nEndpoints:")
+        print(f"  POST /api/auth/register   - Register user (returns JWT)")
+        print(f"  POST /api/auth/login      - Login (returns JWT)")
+        print(f"  POST /api/auth/logout     - Logout")
+        print(f"  GET  /api/auth/me         - Get current user (requires JWT)")
+        print(f"  POST /api/auth/refresh    - Refresh JWT token")
+        print(f"\nUsage:")
+        print(f"  1. Register/Login to get JWT token")
+        print(f"  2. Include token in requests:")
+        print(f"     Authorization: Bearer <token>")
+        print(f"\nNote: Requires PyJWT package")
+        print(f"  pip install PyJWT")
+    else:
+        print(f"\n  2. Configure email in settings.py:")
+        print(f"     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'")
+        print(f"     EMAIL_HOST = 'smtp.gmail.com'")
+        print(f"     EMAIL_PORT = 587")
+        print(f"     EMAIL_USE_TLS = True")
+        print(f"     EMAIL_HOST_USER = 'your-email@gmail.com'")
+        print(f"     EMAIL_HOST_PASSWORD = 'your-app-password'")
+        print(f"     DEFAULT_FROM_EMAIL = 'your-email@gmail.com'")
+        print(f"     SITE_URL = 'http://localhost:8000'")
+        print(f"\nEndpoints:")
+        print(f"  POST /api/auth/register        - Register user")
+        print(f"  GET  /api/auth/verify          - Verify email")
+        print(f"  POST /api/auth/login           - Login")
+        print(f"  POST /api/auth/logout          - Logout")
+        print(f"  GET  /api/auth/me              - Get current user")
+        print(f"  POST /api/auth/forgot-password - Request reset")
+        print(f"  POST /api/auth/reset-password  - Reset password")
+    print()
 
 
 def show_help():
     """Show help message"""
-    help_text = """
-Shanks Django CLI
-
-Usage:
-    shanks <command> [options]
-
-Commands:
-    run [host:port]              Run development server with auto-reload
-                                 Default: 127.0.0.1:8000
-
-    new <name>                   Create a new Shanks Django project
-                                 with Go-like architecture
-
-    create <endpoint> --crud     Generate CRUD endpoints with model
-                                 Creates: entity, controller, routes
-                                 Example: shanks create products --crud
-
-    create auth --simple         Generate simple auth endpoints
-                                 Creates: /login, /register, /me
-
-    create auth --complete       Generate complete auth endpoints
-                                 Creates: /login, /register, /verify, /me
-
-    generate django              Generate full Django project structure
-                                 Creates: django_output/ with standard Django layout
-                                 Useful for deployment or comparison
-
-    format                       Format code with black
-    lint                         Lint code with flake8
-    check                        Format and lint code
-
-    help                         Show this help message
-
-Database Commands (use 'sorm' CLI):
-    sorm make                    Create migrations
-    sorm db migrate              Apply migrations
-    sorm db push                 Create + apply migrations
-    sorm db reset                Reset database
-    sorm db shell                Database shell
-    sorm studio                  Open admin panel
-
-Examples:
-    shanks new myproject                # Create new project
-    shanks create products --crud       # Generate products CRUD
-    shanks create auth --simple         # Generate auth endpoints
-    shanks generate django              # Generate Django structure
-    shanks run                          # Start server
-    shanks format                       # Format code
-    
-    sorm db push                        # Database migrations
-    sorm studio                         # Open admin panel
-"""
-    print(help_text)
+    print_banner()
+    print("Usage: shanks <command> [options]\n")
+    print("Commands:")
+    print("  new <name>              Create new project")
+    print("  create <name> --crud    Generate CRUD endpoints")
+    print("  create auth [--simple]  Generate auth endpoints")
+    print("  run                     Start development server")
+    print("  help                    Show this help\n")
+    print("SORM Commands:")
+    print("  Use 'sorm' command for database operations")
+    print("  sorm db push            Create and apply migrations")
+    print("  sorm db reset           Reset database")
+    print("  sorm studio             Open admin panel\n")
+    print("Examples:")
+    print("  shanks new myapp")
+    print("  shanks create posts --crud")
+    print("  shanks create auth --simple")
+    print("  shanks run")
+    print("  sorm db push")
+    print()
 
 
-def sorm_main():
-    """Main entry point for SORM CLI"""
-    if len(sys.argv) < 2:
-        show_sorm_help()
-        sys.exit(0)
-
-    command = sys.argv[1]
-
-    if command == "make":
-        sorm_make()
-    elif command == "db":
-        if len(sys.argv) < 3:
-            print("Usage: sorm db <action>")
-            print("Actions: migrate, push, reset, shell")
-            sys.exit(1)
-
-        action = sys.argv[2]
-        if action == "migrate":
-            sorm_db_migrate()
-        elif action == "push":
-            sorm_db_push()
-        elif action == "reset":
-            sorm_db_reset()
-        elif action == "shell":
-            sorm_db_shell()
-        else:
-            print(f"Unknown db action: {action}")
-            print("Use: migrate, push, reset, or shell")
-            sys.exit(1)
-    elif command == "studio":
-        sorm_studio()
-    elif command == "help" or command == "--help" or command == "-h":
-        show_sorm_help()
-    else:
-        print(f"Unknown command: {command}")
-        show_sorm_help()
+def run_server():
+    """Run development server"""
+    if not Path("manage.py").exists():
+        print("[ERROR] manage.py not found")
+        print("Make sure you're in a Shanks project directory")
         sys.exit(1)
+
+    print("Starting development server...\n")
+    
+    try:
+        subprocess.run([sys.executable, "manage.py", "runserver"])
+    except KeyboardInterrupt:
+        print("\n\nServer stopped")
 
 
 def main():
@@ -1427,55 +1119,175 @@ def main():
 
     command = sys.argv[1]
 
-    if command == "run":
-        run_server()
-    elif command == "new":
+    if command == "new":
         create_project()
     elif command == "create":
-        # Handle create subcommands
-        if len(sys.argv) < 3:
-            print("Usage: shanks create <endpoint> --crud")
-            print("       shanks create auth --simple|--complete")
-            sys.exit(1)
-
-        subcommand = sys.argv[2]
-        if subcommand == "auth":
-            create_auth_endpoint()
-        elif "--crud" in sys.argv:
+        if "--crud" in sys.argv:
             create_crud_endpoint()
+        elif "auth" in sys.argv:
+            create_auth()
         else:
-            print(f"Unknown create command: {subcommand}")
+            print("[ERROR] Unknown create command")
             print("Use: shanks create <endpoint> --crud")
-            print("Or:  shanks create auth --simple|--complete")
+            print("     shanks create auth [--simple]")
             sys.exit(1)
-    elif command == "format":
-        format_code()
-    elif command == "lint":
-        lint_code()
-    elif command == "check":
-        format_code()
-        lint_code()
-    elif command == "generate":
-        # Handle generate subcommands
-        if len(sys.argv) < 3:
-            print("Usage: shanks generate <type>")
-            print("Types: django")
-            sys.exit(1)
-
-        subcommand = sys.argv[2]
-        if subcommand == "django":
-            generate_django_structure()
-        else:
-            print(f"Unknown generate type: {subcommand}")
-            print("Use: shanks generate django")
-            sys.exit(1)
+    elif command == "run":
+        run_server()
     elif command == "help":
         show_help()
     else:
-        print(f"Unknown command: {command}")
+        print(f"[ERROR] Unknown command: {command}")
         show_help()
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+
+
+
+# SORM CLI
+def sorm_main():
+    """SORM CLI entry point"""
+    if len(sys.argv) < 2:
+        show_sorm_help()
+        sys.exit(0)
+
+    command = sys.argv[1]
+
+    if command == "db":
+        if len(sys.argv) < 3:
+            show_sorm_help()
+            sys.exit(1)
+        
+        subcommand = sys.argv[2]
+        if subcommand == "push":
+            sorm_db_push()
+        elif subcommand == "reset":
+            sorm_db_reset()
+        else:
+            print(f"[ERROR] Unknown db command: {subcommand}")
+            show_sorm_help()
+            sys.exit(1)
+    elif command == "studio":
+        sorm_studio()
+    else:
+        print(f"[ERROR] Unknown command: {command}")
+        show_sorm_help()
+        sys.exit(1)
+
+
+def sorm_db_push():
+    """Create and apply migrations"""
+    if not Path("manage.py").exists():
+        print("[ERROR] manage.py not found")
+        sys.exit(1)
+
+    print("[1/2] Creating migrations...")
+    result = subprocess.run(
+        [sys.executable, "manage.py", "makemigrations"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        print("[ERROR] Failed to create migrations")
+        print(result.stderr)
+        sys.exit(1)
+
+    if "No changes detected" in result.stdout:
+        print("  No changes detected")
+    else:
+        for line in result.stdout.split("\n"):
+            if "Migrations for" in line or "Create model" in line:
+                print(f"  {line.strip()}")
+
+    print("[2/2] Applying migrations...")
+    result = subprocess.run(
+        [sys.executable, "manage.py", "migrate"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        for line in result.stdout.split("\n"):
+            if "Applying" in line:
+                print(f"  {line.strip()}")
+        print("\n" + "="*50)
+        print("SUCCESS! Database updated")
+        print("="*50 + "\n")
+    else:
+        print("[ERROR] Failed to apply migrations")
+        print(result.stderr)
+        sys.exit(1)
+
+
+def sorm_db_reset():
+    """Reset database"""
+    if not Path("manage.py").exists():
+        print("[ERROR] manage.py not found")
+        sys.exit(1)
+
+    print("WARNING: This will delete all data!")
+    confirm = input("Type 'yes' to confirm: ")
+
+    if confirm.lower() != "yes":
+        print("Cancelled")
+        sys.exit(0)
+
+    print("Resetting database...")
+    result = subprocess.run([sys.executable, "manage.py", "flush", "--noinput"])
+
+    if result.returncode == 0:
+        print("\n" + "="*50)
+        print("SUCCESS! Database reset")
+        print("="*50 + "\n")
+    else:
+        print("[ERROR] Failed to reset database")
+        sys.exit(1)
+
+
+def sorm_studio():
+    """Open admin panel"""
+    if not Path("manage.py").exists():
+        print("[ERROR] manage.py not found")
+        sys.exit(1)
+
+    print("Creating superuser for admin panel...\n")
+    result = subprocess.run([sys.executable, "manage.py", "createsuperuser"])
+
+    if result.returncode == 0:
+        print("\n" + "="*50)
+        print("SUCCESS! Superuser created")
+        print("="*50)
+        print("\nStarting server...")
+        print("Admin: http://127.0.0.1:8000/admin\n")
+
+        try:
+            subprocess.run([sys.executable, "manage.py", "runserver"])
+        except KeyboardInterrupt:
+            print("\n\nServer stopped")
+
+
+def show_sorm_help():
+    """Show SORM help"""
+    print(r"""
+   _____ ____  _____  __  __ 
+  / ____/ __ \|  __ \|  \/  |
+ | (___| |  | | |__) | \  / |
+  \___ \ |  | |  _  /| |\/| |
+  ____) | |__| | | \ \| |  | |
+ |_____/ \____/|_|  \_\_|  |_|
+                              
+ Shanks ORM - Prisma-like CLI
+""")
+    print("Usage: sorm <command> [options]\n")
+    print("Commands:")
+    print("  db push                 Create and apply migrations")
+    print("  db reset                Reset database (delete all data)")
+    print("  studio                  Create superuser and open admin\n")
+    print("Examples:")
+    print("  sorm db push")
+    print("  sorm db reset")
+    print("  sorm studio")
+    print()

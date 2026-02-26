@@ -18,7 +18,9 @@ class Request:
         if self._request.content_type == "application/json":
             try:
                 return json.loads(self._request.body)
-            except:
+            except (json.JSONDecodeError, ValueError, UnicodeDecodeError) as e:
+                # Return empty dict for invalid JSON, but could also raise error
+                # depending on desired behavior
                 return {}
         return self._request.POST.dict()
 
