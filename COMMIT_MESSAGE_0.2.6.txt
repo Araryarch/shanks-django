@@ -1,0 +1,28 @@
+Release v0.2.6 - Generate Django Structure
+
+New Feature:
+- Added `shanks generate django` command
+- Converts Shanks project to standard Django structure
+- Auto-generates urls.py from Shanks routes
+- Creates deployment-ready structure with requirements.txt
+- Includes deployment README with Gunicorn, uWSGI, Docker examples
+- Ready for Heroku, Railway, PythonAnywhere, and all major platforms
+
+Testing:
+- Generated projects pass Django check
+- Server runs successfully
+- All endpoints work correctly
+- Deployment structure validated
+
+Files Changed:
+- shanks/__init__.py (version bump to 0.2.6)
+- shanks/cli.py (added generate_django function)
+- pyproject.toml (version bump)
+- CHANGELOG.md (v0.2.6 changelog)
+- RELEASE_NOTES_0.2.6.md (release documentation)
+- GENERATE_DJANGO_TEST.md (test results)
+- PYPI_UPLOAD_INSTRUCTIONS.md (upload guide)
+
+Ready for PyPI upload.
+
+Closes: Feature request for Django structure generation

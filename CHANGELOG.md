@@ -2,6 +2,23 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.2.6] - 2026-02-26
+
+### Added
+- **Generate Django Command**: `shanks generate django`
+  - Converts Shanks project to standard Django structure for deployment
+  - Auto-generates `urls.py` from Shanks routes
+  - Copies all apps, models, migrations, and database
+  - Creates `requirements.txt` with production dependencies
+  - Generates deployment README with Gunicorn, uWSGI, Docker examples
+  - Ready for deployment to Heroku, Railway, PythonAnywhere, etc.
+
+### Tested
+- All generated Django projects pass `python manage.py check`
+- Server runs successfully with generated structure
+- All endpoints work correctly
+- Deployment-ready structure validated
+
 ## [0.2.5] - 2026-02-26
 
 ### Added
