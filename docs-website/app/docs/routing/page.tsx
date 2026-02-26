@@ -1,427 +1,205 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DocPage, CodeBlock, Callout } from '@/components/DocPage';
+import Link from 'next/link';
 
 export default function RoutingPage() {
   return (
-    <div className="space-y-12">
-      <div className="space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">Routing</h1>
-        <p className="text-xl text-muted-foreground">
-          Express.js-like routing with grouping support. No more Django urls.py complexity.
-        </p>
-      </div>
+    <DocPage
+      title="Routing"
+      description="Express.js-like routing for Django. Simple, clean, and powerful."
+    >
+      <h2>Overview</h2>
+      <p>
+        Shanks provides an Express.js-inspired routing system that makes defining API endpoints
+        simple and intuitive. No more complex Django urls.py files - just clean decorators.
+      </p>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Routes</CardTitle>
-          <CardDescription>
-            Define routes with decorators - just like Express.js.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`from shanks import App
+      <Callout type="info" title="Key Features">
+        <ul>
+          <li>Express.js-like decorator syntax</li>
+          <li>Route grouping with prefixes</li>
+          <li>Dynamic URL parameters with type detection</li>
+          <li>Multiple HTTP methods on same path</li>
+          <li>Automatic URL pattern generation</li>
+        </ul>
+      </Callout>
+
+      <h2>Quick Example</h2>
+      <CodeBlock
+        code={`from shanks import App
 
 app = App()
 
 @app.get("api/posts")
 def list_posts(req):
     return {"posts": []}
+
+@app.get("api/posts/<id>")
+def get_post(req, id):
+    return {"id": id}
 
 @app.post("api/posts")
 def create_post(req):
-    return {"post": {}}
+    data = req.body
+    return {"message": "Created"}
 
-@app.get("api/posts/<int:id>")
-def get_post(req, id):
-    return {"post": {"id": id}}
+# Export for Django
+urlpatterns = app.get_urls()`}
+        filename="internal/routes/__init__.py"
+      />
 
-@app.put("api/posts/<id>")
-def update_post(req, id):
-    return {"updated": True}
+      <h2>Core Concepts</h2>
 
-@app.delete("api/posts/<id>")
-def delete_post(req, id):
-    return {"deleted": True}
+      <h3>1. App Instance</h3>
+      <p>
+        The <code>App</code> class is the main router. Create an instance and use decorators
+        to define routes:
+      </p>
+      <CodeBlock
+        code={`from shanks import App
 
-# urlpatterns auto-generated! ✨`}</code>
-          </pre>
-        </CardContent>
-      </Card>
+app = App()  # Create router instance`}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Route Grouping</CardTitle>
-          <CardDescription>
-            Group routes with prefixes like Gin/Express - clean and organized.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`from shanks import App
+      <h3>2. Route Decorators</h3>
+      <p>
+        Use decorators to define routes for different HTTP methods:
+      </p>
+      <CodeBlock
+        code={`@app.get("path")      # GET requests
+@app.post("path")     # POST requests
+@app.put("path")      # PUT requests
+@app.delete("path")   # DELETE requests
+@app.patch("path")    # PATCH requests`}
+      />
 
-app = App()
+      <h3>3. Request Object</h3>
+      <p>
+        All route handlers receive a <code>Request</code> object with useful properties:
+      </p>
+      <CodeBlock
+        code={`def handler(req):
+    req.method      # HTTP method (GET, POST, etc.)
+    req.path        # Request path
+    req.body        # Parsed JSON body (POST/PUT)
+    req.query       # Query parameters
+    req.headers     # Request headers
+    req.user        # Authenticated user
+    req.session     # Session data
+    req.cookies     # Cookies
+    req.files       # Uploaded files`}
+      />
 
-# Create route groups
-api = app.group("api")
-v1 = api.group("v1")
-
-# All routes in v1 will have prefix "api/v1"
-@v1.get("users")
-def list_users(req):
-    return {"users": []}  # GET /api/v1/users
-
-@v1.get("posts")
-def list_posts(req):
-    return {"posts": []}  # GET /api/v1/posts
-
-# Nested grouping
-admin = v1.group("admin")
-
-@admin.get("stats")
-def get_stats(req):
-    return {"stats": {}}  # GET /api/v1/admin/stats
-
-# urlpatterns auto-generated! ✨`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Multiple Routers</CardTitle>
-          <CardDescription>
-            Organize routes in separate files for better structure.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">internal/routes/auth.py</h3>
-              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
-                <code className="text-sm">{`from shanks import App
-
-router = App()
-
-@router.post("api/auth/login")
-def login(req):
-    return {"token": "..."}
-
-@router.post("api/auth/register")
-def register(req):
-    return {"user": {...}}`}</code>
-              </pre>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">internal/routes/posts.py</h3>
-              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
-                <code className="text-sm">{`from shanks import App
-
-router = App()
-
-@router.get("api/posts")
-def list_posts(req):
-    return {"posts": []}
-
-@router.post("api/posts")
-def create_post(req):
-    return {"post": {...}}`}</code>
-              </pre>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">internal/routes/__init__.py</h3>
-              <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
-                <code className="text-sm">{`from shanks import App
-from . import auth, posts
-
-app = App()
-
-# Include all routers
-app.include(auth.router, posts.router)
-
-# urlpatterns auto-generated! ✨`}</code>
-              </pre>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>URL Parameters</CardTitle>
-          <CardDescription>
-            Capture dynamic values from URLs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`# Integer parameter
-@app.get("api/users/<int:user_id>")
-def get_user(req, user_id):
-    return {"id": user_id}
-
-# String parameter (slug)
-@app.get("api/posts/<slug:slug>")
-def get_post(req, slug):
-    return {"slug": slug}
-
-# Path parameter (captures slashes)
-@app.get("api/files/<path:filepath>")
-def get_file(req, filepath):
-    return {"path": filepath}
-
-# Multiple parameters (auto-detect as int)
-@app.get("api/users/<user_id>/posts/<post_id>")
-def get_user_post(req, user_id, post_id):
-    return {"user_id": user_id, "post_id": post_id}`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Query Parameters</CardTitle>
-          <CardDescription>
-            Access query string parameters from the request.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`@app.get("api/search")
-def search(req):
-    # /api/search?q=django&page=2&limit=20
-    query = req.query.get('q')
-    page = int(req.query.get('page', 1))
-    limit = int(req.query.get('limit', 10))
-    
-    return {
-        'query': query,
-        'page': page,
-        'limit': limit,
-        'results': [...]
-    }
-
-@app.get("api/posts")
-def list_posts(req):
-    # /api/posts?published=true&author=john
-    published = req.query.get('published') == 'true'
-    author = req.query.get('author')
-    
-    posts = Post.find_many(
-        published=published,
-        author__username=author
-    )
-    return {"posts": [...]}`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Request Object</CardTitle>
-          <CardDescription>
-            Access all request data - body, headers, cookies, files, and more.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`@app.post("api/posts")
-def create_post(req):
-    # JSON body
-    title = req.body.get('title')
-    content = req.body.get('content')
-    
-    # Query parameters
-    draft = req.query.get('draft', 'false') == 'true'
-    
-    # Headers
-    auth = req.headers.get('Authorization')
-    content_type = req.headers.get('Content-Type')
-    
-    # Cookies
-    session = req.cookies.get('session')
-    
-    # Uploaded files
-    image = req.files.get('image')
-    
-    # Authenticated user (Django)
-    user = req.user
-    is_authenticated = req.user.is_authenticated
-    
-    # HTTP method and path
-    method = req.method  # POST
-    path = req.path      # /api/posts
-    
-    # Full Django request
-    django_req = req.django
-    
-    return {"created": True}`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Response Object</CardTitle>
-          <CardDescription>
-            Return JSON, set status codes, headers, cookies, and more.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`from shanks import App, Response
-
-app = App()
-
-# Simple JSON (auto-converts)
+      <h3>4. Response Types</h3>
+      <p>
+        Return different types of responses:
+      </p>
+      <CodeBlock
+        code={`# JSON response (automatic)
 @app.get("api/data")
 def get_data(req):
-    return {"data": "value"}
+    return {"key": "value"}
 
-# Custom status code
-@app.post("api/posts")
-def create_post(req):
-    return Response().status_code(201).json({
-        "created": True
-    })
+# Custom response
+from shanks import Response
 
-# Set headers
 @app.get("api/custom")
 def custom(req):
-    return (Response()
-        .header('X-Custom-Header', 'value')
-        .header('X-API-Version', '1.0')
-        .json({"ok": True}))
+    return Response()\\
+        .status_code(201)\\
+        .json({"message": "Created"})
 
-# Set cookies
-@app.post("api/login")
-def login(req):
-    return (Response()
-        .cookie('token', 'abc123', max_age=3600)
-        .cookie('refresh', 'xyz789', max_age=86400)
-        .json({"logged_in": True}))
+# Error response
+@app.get("api/error")
+def error(req):
+    return Response()\\
+        .status_code(404)\\
+        .json({"error": "Not found"})`}
+      />
 
-# Redirect
-@app.get("old-url")
-def old_url(req):
-    return Response().redirect('/new-url')
+      <h2>Routing Topics</h2>
 
-# File download
-@app.get("api/download")
-def download(req):
-    return Response().file('/path/to/file.pdf', 'document.pdf')`}</code>
-          </pre>
-        </CardContent>
-      </Card>
+      <div className="not-prose grid gap-4 sm:grid-cols-2 my-8">
+        <Link
+          href="/docs/routing/basic"
+          className="block rounded-lg border p-4 transition-colors"
+          style={{
+            borderColor: 'var(--ctp-surface0)',
+            backgroundColor: 'var(--ctp-mantle)'
+          }}
+        >
+          <h3 className="mb-2 font-semibold" style={{ color: 'var(--ctp-text)' }}>
+            Basic Routes
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--ctp-subtext0)' }}>
+            Learn how to define basic routes with GET, POST, PUT, DELETE
+          </p>
+        </Link>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete CRUD Example</CardTitle>
-          <CardDescription>
-            Full REST API with all CRUD operations.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-background border border-border rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm">{`from shanks import App, Response, Model, CharField, TextField
+        <Link
+          href="/docs/routing/groups"
+          className="block rounded-lg border p-4 transition-colors"
+          style={{
+            borderColor: 'var(--ctp-surface0)',
+            backgroundColor: 'var(--ctp-mantle)'
+          }}
+        >
+          <h3 className="mb-2 font-semibold" style={{ color: 'var(--ctp-text)' }}>
+            Route Groups
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--ctp-subtext0)' }}>
+            Group routes with common prefixes and middleware
+          </p>
+        </Link>
 
-# Model
-class Post(Model):
-    title = CharField(max_length=200)
-    content = TextField()
+        <Link
+          href="/docs/routing/dynamic"
+          className="block rounded-lg border p-4 transition-colors"
+          style={{
+            borderColor: 'var(--ctp-surface0)',
+            backgroundColor: 'var(--ctp-mantle)'
+          }}
+        >
+          <h3 className="mb-2 font-semibold" style={{ color: 'var(--ctp-text)' }}>
+            Dynamic Routes
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--ctp-subtext0)' }}>
+            Handle dynamic URL parameters with automatic type detection
+          </p>
+        </Link>
 
-# Routes
-app = App()
+        <Link
+          href="/docs/routing/methods"
+          className="block rounded-lg border p-4 transition-colors"
+          style={{
+            borderColor: 'var(--ctp-surface0)',
+            backgroundColor: 'var(--ctp-mantle)'
+          }}
+        >
+          <h3 className="mb-2 font-semibold" style={{ color: 'var(--ctp-text)' }}>
+            HTTP Methods
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--ctp-subtext0)' }}>
+            Handle multiple HTTP methods on the same path
+          </p>
+        </Link>
+      </div>
 
-# List all
-@app.get("api/posts")
-def list_posts(req):
-    page = int(req.query.get('page', 1))
-    limit = int(req.query.get('limit', 10))
-    
-    posts = Post.find_many()
-    return {
-        "posts": [{"id": p.id, "title": p.title} for p in posts],
-        "page": page,
-        "limit": limit
-    }
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Use RESTful naming conventions (e.g., <code>/api/posts</code>, <code>/api/posts/&lt;id&gt;</code>)</li>
+        <li>Group related routes together</li>
+        <li>Use route groups for common prefixes</li>
+        <li>Keep route handlers thin - move logic to services</li>
+        <li>Use meaningful parameter names</li>
+        <li>Return consistent response formats</li>
+      </ul>
 
-# Get by ID
-@app.get("api/posts/<int:id>")
-def get_post(req, id):
-    post = Post.find_unique(id=id)
-    if not post:
-        return Response().status_code(404).json({
-            "error": "Post not found"
-        })
-    return {
-        "id": post.id,
-        "title": post.title,
-        "content": post.content
-    }
-
-# Create
-@app.post("api/posts")
-def create_post(req):
-    post = Post.create(
-        title=req.body.get('title'),
-        content=req.body.get('content')
-    )
-    return Response().status_code(201).json({
-        "id": post.id
-    })
-
-# Update
-@app.put("api/posts/<int:id>")
-def update_post(req, id):
-    post = Post.find_unique(id=id)
-    if not post:
-        return Response().status_code(404).json({
-            "error": "Not found"
-        })
-    
-    post.update_self(
-        title=req.body.get('title'),
-        content=req.body.get('content')
-    )
-    return {"updated": True}
-
-# Delete
-@app.delete("api/posts/<int:id>")
-def delete_post(req, id):
-    post = Post.find_unique(id=id)
-    if not post:
-        return Response().status_code(404).json({
-            "error": "Not found"
-        })
-    
-    post.delete_self()
-    return {"deleted": True}
-
-# urlpatterns auto-generated! ✨`}</code>
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>No urls.py Needed!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              In settings.py, just point to your routes:
-            </p>
-            <pre className="bg-background border border-border rounded-lg p-3 overflow-x-auto">
-              <code className="text-sm">{`ROOT_URLCONF = "internal.routes"`}</code>
-            </pre>
-            <p className="text-muted-foreground">
-              That's it! No need to create urls.py files. Your routes export urlpatterns directly.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <h2>Next Steps</h2>
+      <ul>
+        <li><Link href="/docs/routing/basic">Learn about basic routes</Link></li>
+        <li><Link href="/docs/routing/groups">Explore route groups</Link></li>
+        <li><Link href="/docs/middleware">Add middleware to routes</Link></li>
+      </ul>
+    </DocPage>
   );
 }

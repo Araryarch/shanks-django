@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const jetbrainsMono = JetBrains_Mono({
+const inter = Inter({ 
   subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
+  variable: "--font-inter",
+});
+
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Shanks Django - Express.js-like framework for Django",
-  description: "Simple routing, Prisma-like ORM, and auto Swagger for Django",
+  title: "Shanks Django - Express.js-like Framework for Django",
+  description: "Fast, elegant, and powerful Django framework with Express.js-like routing",
 };
 
 export default function RootLayout({
@@ -20,10 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={jetbrainsMono.variable + "font-bold"}>
-      <body className="antialiased">
-        {children}
-      </body>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
+      <body className="bg-[#0a0608] text-white font-sans">{children}</body>
     </html>
   );
 }

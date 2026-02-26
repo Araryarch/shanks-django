@@ -1,74 +1,41 @@
-import { H1, H2, Lead, P, SimpleCodeBlock, Alert, H3, List, ListItem, Section } from '@/components/Typography'
+import { DocPage, CodeBlock, Callout } from '@/components/DocPage';
 
 export default function InstallationPage() {
   return (
-    <div>
-      <H1>Installation</H1>
-      <Lead>Get Shanks Django installed on your system.</Lead>
+    <DocPage
+      title="Installation"
+      description="Install Shanks Django and get started in minutes."
+    >
+      <h2>Requirements</h2>
+      <ul>
+        <li>Python 3.8 or higher</li>
+        <li>pip (Python package manager)</li>
+        <li>Virtual environment (recommended)</li>
+      </ul>
 
-      <Section>
-        <H2>Requirements</H2>
-        <List>
-          <ListItem>Python 3.8 or higher</ListItem>
-          <ListItem>Django 3.2 or higher</ListItem>
-        </List>
-      </Section>
+      <h2>Install via pip</h2>
+      <CodeBlock code="pip install shanks-django" language="bash" />
 
-      <Section>
-        <H2>Install from PyPI</H2>
-        <SimpleCodeBlock>pip install shanks-django</SimpleCodeBlock>
-      </Section>
+      <Callout type="success" title="Installation Complete">
+        You now have access to <code>shanks</code> and <code>sorm</code> CLI commands!
+      </Callout>
 
-      <Section>
-        <H2>Install from Wheel</H2>
-        <P>If you have the .whl file:</P>
-        <SimpleCodeBlock>pip install shanks_django-0.1.0-py3-none-any.whl</SimpleCodeBlock>
-      </Section>
+      <h2>Verify Installation</h2>
+      <CodeBlock 
+        code={`shanks help
+sorm --help
 
-      <Section>
-        <H2>Install from Source</H2>
-        <SimpleCodeBlock>
-          git clone https://github.com/Ararya/shanks-django.git{'\n'}
-          cd shanks-django{'\n'}
-          pip install -e .
-        </SimpleCodeBlock>
-      </Section>
+# Check version
+python -c "import shanks; print(shanks.__version__)"`}
+        language="bash"
+      />
 
-      <Section>
-        <H2>Optional Dependencies</H2>
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs text-neutral-600 mb-2">PostgreSQL support:</p>
-            <SimpleCodeBlock>pip install shanks-django[postgres]</SimpleCodeBlock>
-          </div>
-          <div>
-            <p className="text-xs text-neutral-600 mb-2">MySQL support:</p>
-            <SimpleCodeBlock>pip install shanks-django[mysql]</SimpleCodeBlock>
-          </div>
-          <div>
-            <p className="text-xs text-neutral-600 mb-2">All databases:</p>
-            <SimpleCodeBlock>pip install shanks-django[all]</SimpleCodeBlock>
-          </div>
-        </div>
-      </Section>
+      <h2>Create Your First Project</h2>
+      <CodeBlock code="shanks new myproject" language="bash" />
 
-      <Section>
-        <H2>Verify Installation</H2>
-        <SimpleCodeBlock>
-          shanks --version{'\n'}
-          # or{'\n'}
-          python -c "import shanks; print(shanks.__version__)"
-        </SimpleCodeBlock>
-      </Section>
-
-      <Alert type="success">
-        <H3>Next Steps</H3>
-        <P>
-          Now that Shanks is installed, check out the{' '}
-          <a href="/docs/getting-started" className="text-red-500 hover:text-red-400 transition">Getting Started</a>{' '}
-          guide to create your first project.
-        </P>
-      </Alert>
-    </div>
-  )
+      <Callout type="info">
+        Continue to <a href="/docs/getting-started">Getting Started</a> for a complete tutorial.
+      </Callout>
+    </DocPage>
+  );
 }
