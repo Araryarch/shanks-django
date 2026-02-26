@@ -2,6 +2,47 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.2.5] - 2026-02-26
+
+### Added
+- **JWT Authentication**: `shanks create auth --simple` command
+  - Generates JWT-based authentication without email verification
+  - No SMTP configuration required
+  - Includes register, login, logout, me, and refresh token endpoints
+  - Uses PyJWT for token generation and validation
+  - Token expiration: 7 days
+  - Stateless authentication with Bearer token
+
+### Fixed
+- **HTTP Method Routing**: Fixed critical issue where all HTTP methods (GET, POST, PUT, DELETE) were handled by GET handler
+  - Root cause: Django `path()` creates one view per path, but Shanks was creating separate views for each method
+  - Solution: Group routes by path and create combined views that check `request.method`
+  - Impact: All CRUD operations now work correctly
+
+- **Cache Invalidation**: Fixed smart cache invalidation not working
+  - Issue: Cache keys were hashed, pattern matching couldn't find them
+  - Solution: Added path-to-keys mapping in SimpleCache class
+  - Cache now properly invalidates on POST/PUT/PATCH/DELETE operations
+  - Auto-cache and smart invalidation work seamlessly together
+
+### Improved
+- **CLI**: Added `shanks create auth [--simple]` command
+  - `--simple`: JWT auth without email verification (no SMTP)
+  - Without flag: Complete auth with email verification (requires SMTP)
+  - Auto-generates controller and routes files
+  - Includes usage instructions and examples
+
+- **Documentation**: 
+  - Added `AUTH_TEST_RESULTS.md` with complete JWT auth documentation
+  - Added `CRUD_TEST_RESULTS.md` with CRUD testing results
+  - Updated help messages with auth command
+
+### Technical Details
+- Modified `shanks/app.py` to group routes by path and handle multiple HTTP methods
+- Enhanced `shanks/cache.py` with path tracking for proper invalidation
+- Added JWT token helpers in auth controller
+- All tests passing on Windows with PowerShell
+
 ## [0.2.3] - 2026-02-25
 
 ### Fixed
