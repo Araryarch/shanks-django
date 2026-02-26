@@ -1085,6 +1085,7 @@ def show_help():
     print("  new <name>              Create new project")
     print("  create <name> --crud    Generate CRUD endpoints")
     print("  create auth [--simple]  Generate auth endpoints")
+    print("  generate django         Generate standard Django structure")
     print("  run                     Start development server")
     print("  help                    Show this help\n")
     print("SORM Commands:")
@@ -1096,8 +1097,194 @@ def show_help():
     print("  shanks new myapp")
     print("  shanks create posts --crud")
     print("  shanks create auth --simple")
+    print("  shanks generate django")
     print("  shanks run")
     print("  sorm db push")
+    print()
+
+
+def generate_django():
+    """Generate standard Django project structure from Shanks project"""
+    if not Path("manage.py").exists():
+        print("[ERROR] Not in a Shanks project directory")
+        sys.exit(1)
+
+    print("Generating standard Django project structure...\n")
+
+    # Get project name from manage.py
+    with open("manage.py", "r", encoding="utf-8") as f:
+        content = f.read()
+        import re
+
+        match = re.search(r'DJANGO_SETTINGS_MODULE.*["\'](.+?)\.settings', content)
+        if not match:
+            print("[ERROR] Could not determine project name")
+            sys.exit(1)
+        project_name = match.group(1)
+
+    output_dir = Path("django_output")
+    if output_dir.exists():
+        print(f"[WARNING] {output_dir} already exists")
+        response = input("Overwrite? (y/n): ")
+        if response.lower() != "y":
+            print("Cancelled")
+            sys.exit(0)
+        import shutil
+
+        shutil.rmtree(output_dir)
+
+    print(f"[1/5] Creating directory structure...")
+    output_dir.mkdir()
+    project_dir = output_dir / project_name
+    project_dir.mkdir()
+
+    # Copy project settings
+    print(f"[2/5] Copying project files...")
+    import shutil
+
+    if Path(project_name).exists():
+        shutil.copytree(project_name, project_dir, dirs_exist_ok=True)
+
+    # Copy apps
+    for app_name in ["internal", "entity", "dto", "config", "utils"]:
+        if Path(app_name).exists():
+            shutil.copytree(app_name, output_dir / app_name, dirs_exist_ok=True)
+
+    # Generate urls.py from Shanks routes
+    print(f"[3/5] Generating urls.py...")
+    urls_content = f'''"""
+URL Configuration for {project_name}
+Generated from Shanks routes
+"""
+from django.contrib import admin
+from django.urls import path
+
+# Import Shanks routes
+try:
+    from internal.routes import urlpatterns as shanks_urls
+except ImportError:
+    shanks_urls = []
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+] + shanks_urls
+'''
+    (project_dir / "urls.py").write_text(urls_content, encoding="utf-8")
+
+    # Copy manage.py
+    shutil.copy("manage.py", output_dir / "manage.py")
+
+    # Copy database
+    if Path("db.sqlite3").exists():
+        shutil.copy("db.sqlite3", output_dir / "db.sqlite3")
+
+    # Copy migrations
+    for app_name in ["entity", "internal"]:
+        migrations_dir = Path(app_name) / "migrations"
+        if migrations_dir.exists():
+            output_migrations = output_dir / app_name / "migrations"
+            output_migrations.mkdir(parents=True, exist_ok=True)
+            for file in migrations_dir.glob("*.py"):
+                shutil.copy(file, output_migrations / file.name)
+
+    # Create requirements.txt
+    print(f"[4/5] Creating requirements.txt...")
+    requirements = """django>=3.2
+shanks-django>=0.2.5
+gunicorn>=20.1.0
+psycopg2-binary>=2.9.0
+python-dotenv>=0.19.0
+"""
+    (output_dir / "requirements.txt").write_text(requirements, encoding="utf-8")
+
+    # Create README
+    print(f"[5/5] Creating deployment README...")
+    readme = f"""# {project_name} - Django Deployment
+
+Standard Django project structure generated from Shanks.
+
+## Quick Start
+
+```bash
+cd django_output
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+## Deployment
+
+### Using Gunicorn
+
+```bash
+gunicorn {project_name}.wsgi:application --bind 0.0.0.0:8000
+```
+
+### Using uWSGI
+
+```bash
+uwsgi --http :8000 --module {project_name}.wsgi
+```
+
+### Docker
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["gunicorn", "{project_name}.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+### Environment Variables
+
+Create `.env` file:
+```
+DEBUG=False
+SECRET_KEY=your-secret-key
+ALLOWED_HOSTS=yourdomain.com
+DATABASE_URL=postgres://user:pass@host:5432/dbname
+```
+
+## Structure
+
+```
+django_output/
+├── {project_name}/          # Project settings
+├── internal/                # Controllers, routes, services
+├── entity/                  # Models
+├── dto/                     # Data Transfer Objects
+├── manage.py
+├── requirements.txt
+└── README.md
+```
+
+## Production Checklist
+
+- [ ] Set DEBUG=False
+- [ ] Configure SECRET_KEY
+- [ ] Set ALLOWED_HOSTS
+- [ ] Configure production database
+- [ ] Collect static files: `python manage.py collectstatic`
+- [ ] Run migrations: `python manage.py migrate`
+- [ ] Create superuser: `python manage.py createsuperuser`
+"""
+    (output_dir / "README.md").write_text(readme, encoding="utf-8")
+
+    # Success message
+    print("\n" + "=" * 50)
+    print("SUCCESS! Django project generated")
+    print("=" * 50)
+    print(f"\nOutput directory: {output_dir}/")
+    print(f"\nNext steps:")
+    print(f"  cd {output_dir}")
+    print(f"  pip install -r requirements.txt")
+    print(f"  python manage.py runserver")
+    print(f"\nFor deployment, see {output_dir}/README.md")
     print()
 
 
@@ -1135,6 +1322,13 @@ def main():
             print("[ERROR] Unknown create command")
             print("Use: shanks create <endpoint> --crud")
             print("     shanks create auth [--simple]")
+            sys.exit(1)
+    elif command == "generate":
+        if len(sys.argv) > 2 and sys.argv[2] == "django":
+            generate_django()
+        else:
+            print("[ERROR] Unknown generate command")
+            print("Use: shanks generate django")
             sys.exit(1)
     elif command == "run":
         run_server()
