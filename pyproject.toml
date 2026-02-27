@@ -65,7 +65,7 @@ Repository = "https://github.com/Araryarch/shanks-django"
 "Bug Tracker" = "https://github.com/Araryarch/shanks-django/issues"
 
 [tool.setuptools]
-packages = ["shanks", "shanks.templates", "SORM"]
+packages = ["shanks", "shanks.cli", "shanks.templates", "SORM"]
 
 [tool.setuptools.package-data]
 shanks = ["templates/*.html"]

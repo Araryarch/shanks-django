@@ -391,6 +391,10 @@ class App:
                     self.middlewares.append(middleware)
         return self
 
+    def __iter__(self):
+        """Make App iterable so it can be unpacked directly"""
+        return iter(self.get_urls())
+
     def get_urls(self):
         """Get Django URL patterns"""
         from django.http import HttpResponse
