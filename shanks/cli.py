@@ -260,7 +260,7 @@ sorm db push              # Update database
 
 
 def create_crud_endpoint():
-    """Create CRUD endpoint"""
+    """Create CRUD endpoint with full layered architecture"""
     if len(sys.argv) < 3:
         print("Usage: shanks create <endpoint_name> --crud")
         sys.exit(1)
@@ -275,16 +275,16 @@ def create_crud_endpoint():
 
     print(f"Creating CRUD for: {model_name}\n")
 
-    # Create entity
-    print("[1/3] Creating model...")
+    # [1/5] Create entity
+    print("[1/5] Creating entity (model)...")
     entity_dir = Path("entity")
     entity_dir.mkdir(exist_ok=True)
     if not (entity_dir / "__init__.py").exists():
         (entity_dir / "__init__.py").write_text("", encoding="utf-8")
 
-    entity_file = entity_dir / f"{endpoint_name}.py"
+    entity_file = entity_dir / f"{endpoint_name}.entity.py"
     entity_content = f'''"""
-{model_name} Model
+{model_name} Entity
 """
 from django.db import models
 from django.contrib.auth.models import User
@@ -310,161 +310,379 @@ class {model_name}(models.Model):
     models_file = entity_dir / "models.py"
     if models_file.exists():
         models_content = models_file.read_text(encoding="utf-8")
-        import_line = f"from .{endpoint_name} import {model_name}"
+        import_line = f"from .{endpoint_name}_entity import {model_name}"
         if import_line not in models_content:
             models_content += f"\n{import_line}\n"
             models_file.write_text(models_content, encoding="utf-8")
     else:
         models_file.write_text(
-            f"from .{endpoint_name} import {model_name}\n", encoding="utf-8"
+            f"from .{endpoint_name}_entity import {model_name}\n", encoding="utf-8"
         )
 
-    # Create controller
-    print("[2/3] Creating controller...")
-    controller_dir = Path("internal/controller")
-    controller_file = controller_dir / f"{endpoint_name}.py"
-    controller_content = f'''"""
-{model_name} Controller
+    # [2/5] Create repository
+    print("[2/5] Creating repository (data access)...")
+    repository_dir = Path("internal/repository")
+    repository_dir.mkdir(parents=True, exist_ok=True)
+    if not (repository_dir / "__init__.py").exists():
+        (repository_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    repository_file = repository_dir / f"{endpoint_name}.repository.py"
+    repository_content = f'''"""
+{model_name} Repository - Data Access Layer
 """
-from shanks import Response
-from entity.{endpoint_name} import {model_name}
+from entity.{endpoint_name}_entity import {model_name}
 
 
-def list_{endpoint_plural}(req):
-    """List with pagination"""
-    page = int(req.query.get("page", 1))
-    limit = int(req.query.get("limit", 10))
+def find_all(page=1, limit=10):
+    """Find all items with pagination"""
     offset = (page - 1) * limit
-
     total = {model_name}.objects.count()
     items = {model_name}.objects.all()[offset : offset + limit]
+    return items, total
 
+
+def find_by_id(item_id):
+    """Find item by ID"""
+    try:
+        return {model_name}.objects.get(id=item_id)
+    except {model_name}.DoesNotExist:
+        return None
+
+
+def create_item(title, description, user):
+    """Create new item"""
+    return {model_name}.objects.create(
+        title=title,
+        description=description,
+        created_by=user
+    )
+
+
+def update_item(item, title=None, description=None):
+    """Update existing item"""
+    if title is not None:
+        item.title = title
+    if description is not None:
+        item.description = description
+    item.save()
+    return item
+
+
+def delete_item(item):
+    """Delete item"""
+    item.delete()
+'''
+    repository_file.write_text(repository_content, encoding="utf-8")
+    
+    # Update repository __init__.py
+    repository_init_file = repository_dir / "__init__.py"
+    repository_init_content = repository_init_file.read_text(encoding="utf-8")
+    import_line = f"from . import {endpoint_name}_repository"
+    if import_line not in repository_init_content:
+        repository_init_content += f"\n{import_line}\n"
+        repository_init_file.write_text(repository_init_content, encoding="utf-8")
+
+    # [3/5] Create service
+    print("[3/5] Creating service (business logic)...")
+    service_dir = Path("internal/service")
+    service_dir.mkdir(parents=True, exist_ok=True)
+    if not (service_dir / "__init__.py").exists():
+        (service_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    service_file = service_dir / f"{endpoint_name}.service.py"
+    service_content = f'''"""
+{model_name} Service - Business Logic Layer
+"""
+from internal.repository import {endpoint_name}_repository
+
+
+def get_{endpoint_plural}_list(page=1, limit=10):
+    """Get paginated list of items"""
+    items, total = {endpoint_name}_repository.find_all(page, limit)
+    
     return {{
         "data": [
             {{
                 "id": item.id,
                 "title": item.title,
                 "description": item.description,
+                "created_at": item.created_at.isoformat(),
+                "updated_at": item.updated_at.isoformat(),
             }}
             for item in items
         ],
-        "pagination": {{"page": page, "limit": limit, "total": total}},
+        "pagination": {{
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }}
     }}
 
 
-def get_by_id(req, id):
-    """Get by ID"""
-    try:
-        item = {model_name}.objects.get(id=id)
-        return {{
-            "id": item.id,
-            "title": item.title,
-            "description": item.description,
+def get_{endpoint_name}_by_id(item_id):
+    """Get single item by ID"""
+    item = {endpoint_name}_repository.find_by_id(item_id)
+    if not item:
+        return None
+    
+    return {{
+        "id": item.id,
+        "title": item.title,
+        "description": item.description,
+        "created_at": item.created_at.isoformat(),
+        "updated_at": item.updated_at.isoformat(),
+        "created_by": {{
+            "id": item.created_by.id,
+            "username": item.created_by.username
         }}
-    except {model_name}.DoesNotExist:
+    }}
+
+
+def create_{endpoint_name}(title, description, user):
+    """Create new item"""
+    item = {endpoint_name}_repository.create_item(title, description, user)
+    return {{"id": item.id, "message": "Created successfully"}}
+
+
+def update_{endpoint_name}(item_id, title=None, description=None):
+    """Update existing item"""
+    item = {endpoint_name}_repository.find_by_id(item_id)
+    if not item:
+        return None
+    
+    {endpoint_name}_repository.update_item(item, title, description)
+    return {{"message": "Updated successfully"}}
+
+
+def delete_{endpoint_name}(item_id):
+    """Delete item"""
+    item = {endpoint_name}_repository.find_by_id(item_id)
+    if not item:
+        return None
+    
+    {endpoint_name}_repository.delete_item(item)
+    return {{"message": "Deleted successfully"}}
+'''
+    service_file.write_text(service_content, encoding="utf-8")
+    
+    # Update service __init__.py
+    service_init_file = service_dir / "__init__.py"
+    service_init_content = service_init_file.read_text(encoding="utf-8")
+    import_line = f"from . import {endpoint_name}_service"
+    if import_line not in service_init_content:
+        service_init_content += f"\n{import_line}\n"
+        service_init_file.write_text(service_init_content, encoding="utf-8")
+
+    # [4/5] Create controller
+    print("[4/5] Creating controller (request handling)...")
+    controller_dir = Path("internal/controller")
+    controller_dir.mkdir(parents=True, exist_ok=True)
+    if not (controller_dir / "__init__.py").exists():
+        (controller_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    controller_file = controller_dir / f"{endpoint_name}.controller.py"
+    controller_content = f'''"""
+{model_name} Controller - Request/Response Handler
+"""
+from shanks import Response
+from internal.service import {endpoint_name}_service
+
+
+def list_{endpoint_plural}(req):
+    """Handle list request"""
+    page = int(req.query.get("page", 1))
+    limit = int(req.query.get("limit", 10))
+    
+    result = {endpoint_name}_service.get_{endpoint_plural}_list(page, limit)
+    return Response().json(result)
+
+
+def get_by_id(req, id):
+    """Handle get by ID request"""
+    result = {endpoint_name}_service.get_{endpoint_name}_by_id(id)
+    
+    if result is None:
         return Response().status_code(404).json({{"error": "Not found"}})
+    
+    return Response().json(result)
 
 
 def create(req):
-    """Create"""
+    """Handle create request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json({{"error": "Auth required"}})
+        return Response().status_code(401).json({{"error": "Authentication required"}})
     
     data = req.body
-    item = {model_name}.objects.create(
-        title=data.get("title"),
-        description=data.get("description", ""),
-        created_by=req.user,
-    )
-    return Response().status_code(201).json({{"id": item.id}})
+    title = data.get("title")
+    description = data.get("description", "")
+    
+    if not title:
+        return Response().status_code(400).json({{"error": "Title is required"}})
+    
+    result = {endpoint_name}_service.create_{endpoint_name}(title, description, req.user)
+    return Response().status_code(201).json(result)
 
 
 def update(req, id):
-    """Update"""
+    """Handle update request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json({{"error": "Auth required"}})
+        return Response().status_code(401).json({{"error": "Authentication required"}})
     
-    try:
-        item = {model_name}.objects.get(id=id)
-        data = req.body
-        item.title = data.get("title", item.title)
-        item.description = data.get("description", item.description)
-        item.save()
-        return {{"message": "Updated"}}
-    except {model_name}.DoesNotExist:
+    data = req.body
+    title = data.get("title")
+    description = data.get("description")
+    
+    result = {endpoint_name}_service.update_{endpoint_name}(id, title, description)
+    
+    if result is None:
         return Response().status_code(404).json({{"error": "Not found"}})
+    
+    return Response().json(result)
 
 
 def delete(req, id):
-    """Delete"""
+    """Handle delete request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json({{"error": "Auth required"}})
+        return Response().status_code(401).json({{"error": "Authentication required"}})
     
-    try:
-        item = {model_name}.objects.get(id=id)
-        item.delete()
-        return {{"message": "Deleted"}}
-    except {model_name}.DoesNotExist:
+    result = {endpoint_name}_service.delete_{endpoint_name}(id)
+    
+    if result is None:
         return Response().status_code(404).json({{"error": "Not found"}})
+    
+    return Response().json(result)
 '''
     controller_file.write_text(controller_content, encoding="utf-8")
+    
+    # Update controller __init__.py
+    controller_init_file = controller_dir / "__init__.py"
+    controller_init_content = controller_init_file.read_text(encoding="utf-8")
+    import_line = f"from . import {endpoint_name}_controller"
+    if import_line not in controller_init_content:
+        controller_init_content += f"\n{import_line}\n"
+        controller_init_file.write_text(controller_init_content, encoding="utf-8")
 
-    # Create routes
-    print("[3/3] Creating routes...")
+    # [5/5] Create routes
+    print("[5/5] Creating routes (endpoint definitions)...")
     routes_dir = Path("internal/routes")
-    routes_file = routes_dir / f"{endpoint_name}.py"
+    routes_file = routes_dir / f"{endpoint_name}.route.py"
     routes_content = f'''"""
 {model_name} Routes
 """
 from shanks import App
-from internal.controller import {endpoint_name} as controller
+from internal.controller import {endpoint_name}_controller
 
 router = App()
 routes = router.group('api/{endpoint_plural}')
 
 
 @routes.get('')
-def list_{endpoint_plural}(req):
-    return controller.list_{endpoint_plural}(req)
+def list_{endpoint_plural}_route(req):
+    return {endpoint_name}_controller.list_{endpoint_plural}(req)
 
 
 @routes.get('<id>')
-def get_{endpoint_name}(req, id):
-    return controller.get_by_id(req, id)
+def get_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.get_by_id(req, id)
 
 
 @routes.post('')
-def create_{endpoint_name}(req):
-    return controller.create(req)
+def create_{endpoint_name}_route(req):
+    return {endpoint_name}_controller.create(req)
 
 
 @routes.put('<id>')
-def update_{endpoint_name}(req, id):
-    return controller.update(req, id)
+def update_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.update(req, id)
 
 
 @routes.delete('<id>')
-def delete_{endpoint_name}(req, id):
-    return controller.delete(req, id)
+def delete_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.delete(req, id)
 
 
 router.include(routes)
 '''
     routes_file.write_text(routes_content, encoding="utf-8")
 
-    print("\n" + "=" * 50)
-    print("SUCCESS! CRUD created")
-    print("=" * 50)
+    # Auto-register routes in __init__.py
+    print("[6/6] Auto-registering routes...")
+    routes_init_file = routes_dir / "__init__.py"
+    
+    if routes_init_file.exists():
+        routes_init_content = routes_init_file.read_text(encoding="utf-8")
+        
+        # Check if import already exists
+        import_line = f"from .{endpoint_name}_route import router as {endpoint_name}_router"
+        include_line = f"app.include({endpoint_name}_router)"
+        
+        needs_update = False
+        
+        if import_line not in routes_init_content:
+            lines = routes_init_content.split('\n')
+            insert_index = -1
+            
+            for i, line in enumerate(lines):
+                if line.strip().startswith('from .') and '_route import router' in line:
+                    insert_index = i + 1
+                elif line.strip().startswith('app = App()'):
+                    if insert_index == -1:
+                        insert_index = i
+            
+            if insert_index == -1:
+                insert_index = 0
+            
+            lines.insert(insert_index, import_line)
+            routes_init_content = '\n'.join(lines)
+            needs_update = True
+        
+        if include_line not in routes_init_content:
+            lines = routes_init_content.split('\n')
+            insert_index = len(lines)
+            
+            for i, line in enumerate(lines):
+                if 'urlpatterns' in line:
+                    insert_index = i
+                    break
+            
+            if insert_index > 0 and lines[insert_index - 1].strip():
+                lines.insert(insert_index, '')
+            lines.insert(insert_index, include_line)
+            routes_init_content = '\n'.join(lines)
+            needs_update = True
+        
+        if needs_update:
+            routes_init_file.write_text(routes_init_content, encoding="utf-8")
+            print(f"  ✓ Updated internal/routes/__init__.py")
+        else:
+            print(f"  ✓ Routes already registered")
+    else:
+        print(f"  ⚠ Warning: internal/routes/__init__.py not found")
+
+    print("\n" + "=" * 60)
+    print("SUCCESS! Full layered CRUD architecture created")
+    print("=" * 60)
     print(f"\nFiles created:")
-    print(f"  - entity/{endpoint_name}.py")
-    print(f"  - internal/controller/{endpoint_name}.py")
-    print(f"  - internal/routes/{endpoint_name}.py")
+    print(f"  📦 Entity:      entity/{endpoint_name}.entity.py")
+    print(f"  💾 Repository:  internal/repository/{endpoint_name}.repository.py")
+    print(f"  ⚙️  Service:     internal/service/{endpoint_name}.service.py")
+    print(f"  🎮 Controller:  internal/controller/{endpoint_name}.controller.py")
+    print(f"  🛣️  Route:       internal/routes/{endpoint_name}.route.py")
+    print(f"\nArchitecture layers:")
+    print(f"  Route → Controller → Service → Repository → Entity")
     print(f"\nNext steps:")
-    print(f"  1. Import in internal/routes/__init__.py:")
-    print(f"     from . import {endpoint_name}")
-    print(f"     app.include({endpoint_name}.router)")
-    print(f"  2. Update database:")
-    print(f"     sorm db push")
+    print(f"  1. Update database: sorm db push")
+    print(f"  2. Run server: shanks run")
+    print(f"\nEndpoints:")
+    print(f"  GET    /api/{endpoint_plural}       - List with pagination")
+    print(f"  GET    /api/{endpoint_plural}/<id>  - Get by ID")
+    print(f"  POST   /api/{endpoint_plural}       - Create new")
+    print(f"  PUT    /api/{endpoint_plural}/<id>  - Update")
+    print(f"  DELETE /api/{endpoint_plural}/<id>  - Delete")
+    print()
+
+
     print(f"\nEndpoints:")
     print(f"  GET    /api/{endpoint_plural}")
     print(f"  GET    /api/{endpoint_plural}/<id>")
