@@ -6,14 +6,15 @@ import sys
 from pathlib import Path
 
 SHANKS_ASCII = r"""
-   _____ _                 _        
-  / ____| |               | |       
- | (___ | |__   __ _ _ __ | | _____ 
-  \___ \| '_ \ / _` | '_ \| |/ / __|
-  ____) | | | | (_| | | | |   <\__ \
- |_____/|_| |_|\__,_|_| |_|_|\_\___/
+  ███████╗██╗  ██╗ █████╗ ███╗   ██╗██╗  ██╗███████╗
+  ██╔════╝██║  ██║██╔══██╗████╗  ██║██║ ██╔╝██╔════╝
+  ███████╗███████║███████║██╔██╗ ██║█████╔╝ ███████╗
+  ╚════██║██╔══██║██╔══██║██║╚██╗██║██╔═██╗ ╚════██║
+  ███████║██║  ██║██║  ██║██║ ╚████║██║  ██╗███████║
+  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
                                     
- Express.js-like framework for Django
+  Express.js-like framework for Django
+  Fast | Simple | Powerful
 """
 
 
@@ -1513,12 +1514,90 @@ def run_server():
         print("Make sure you're in a Shanks project directory")
         sys.exit(1)
 
-    print("Starting development server...\n")
+    # ASCII Art Banner
+    print("\n")
+    print("  ███████╗██╗  ██╗ █████╗ ███╗   ██╗██╗  ██╗███████╗")
+    print("  ██╔════╝██║  ██║██╔══██╗████╗  ██║██║ ██╔╝██╔════╝")
+    print("  ███████╗███████║███████║██╔██╗ ██║█████╔╝ ███████╗")
+    print("  ╚════██║██╔══██║██╔══██║██║╚██╗██║██╔═██╗ ╚════██║")
+    print("  ███████║██║  ██║██║  ██║██║ ╚████║██║  ██╗███████║")
+    print("  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝")
+    print()
+    print("  " + "=" * 54)
+    print("  Fast | Simple | Powerful - Development Server")
+    print("  " + "=" * 54)
+    
+    # Get project name from current directory
+    project_name = Path.cwd().name
+    
+    print()
+    print(f"  Project:     {project_name}")
+    print(f"  Server:      http://127.0.0.1:8000")
+    print(f"  API Docs:    http://127.0.0.1:8000/api/docs")
+    print(f"  Auto-reload: Enabled")
+    print()
+    print("  " + "-" * 54)
+    print("  Press CTRL+C to stop the server")
+    print("  " + "-" * 54)
+    print()
 
     try:
-        subprocess.run([sys.executable, "manage.py", "runserver"])
+        # Suppress Django's default startup messages
+        import os
+        import sys as system
+        
+        env = os.environ.copy()
+        env['PYTHONUNBUFFERED'] = '1'
+        env['DJANGO_COLORS'] = 'nocolor'
+        
+        # Run server with custom settings
+        process = subprocess.Popen(
+            [sys.executable, "manage.py", "runserver"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            bufsize=1
+        )
+        
+        # Filter and display output
+        for line in process.stdout:
+            line = line.strip()
+            
+            # Skip Django's default startup messages
+            if any(skip in line for skip in [
+                "Watching for file changes",
+                "Performing system checks",
+                "System check identified",
+                "Django version",
+                "Starting development server at",
+                "Quit the server with"
+            ]):
+                continue
+            
+            # Show important messages
+            if line:
+                # Highlight errors and warnings
+                if "error" in line.lower() or "exception" in line.lower():
+                    print(f"  [ERROR] {line}")
+                elif "warning" in line.lower():
+                    print(f"  [WARN]  {line}")
+                elif "GET" in line or "POST" in line or "PUT" in line or "DELETE" in line:
+                    # Format HTTP requests nicely
+                    print(f"  [HTTP]  {line}")
+                else:
+                    print(f"  {line}")
+        
+        process.wait()
+        
     except KeyboardInterrupt:
-        print("\n\nServer stopped")
+        print()
+        print()
+        print("  " + "=" * 54)
+        print("  Server stopped gracefully")
+        print("  " + "=" * 54)
+        print("  Thanks for using Shanks!")
+        print()
 
 
 def main():
