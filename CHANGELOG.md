@@ -2,6 +2,37 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.3.0] - 2026-02-27
+
+### Added
+- **Template Rendering Support**: Django-style template rendering
+  - New `render()` function for rendering HTML templates with context
+  - New `render_string()` function for rendering templates to string
+  - New `render_html()` function for rendering raw HTML with context
+  - Auto-generated `templates/` folder in new projects
+  - Beautiful landing page template (`index.html`) included by default
+  - Full Django template engine integration
+
+### Changed
+- **Project Structure**: Renamed `routes/` to `views/` for Django best practice
+  - `internal/routes/` → `internal/views/`
+  - `*_route.py` → `*_view.py`
+  - Better alignment with Django conventions
+  - All CLI commands updated to use new structure
+
+### Improved
+- **Django Conversion**: Enhanced `shanks generate django` command
+  - Properly converts `render()` imports to Django's `from django.shortcuts import render`
+  - Handles template rendering in converted projects
+  - Fixed URL pattern generation (no leading slash for root path)
+  - Templates directory included in converted projects
+  - Production-ready settings with template configuration
+
+### Fixed
+- **Template Configuration**: Fixed `get_templates()` to include project templates directory
+  - Templates now properly discovered in `BASE_DIR/templates/`
+  - Works seamlessly with both Shanks and converted Django projects
+
 ## [0.2.6] - 2026-02-26
 
 ### Added
