@@ -128,7 +128,7 @@ SECRET_KEY = get_secret_key()
 DEBUG = get_debug()
 ALLOWED_HOSTS = get_allowed_hosts()
 
-INSTALLED_APPS = get_installed_apps(["internal", "db.entity", "dto"])
+INSTALLED_APPS = get_installed_apps(["internal", "db", "dto"])
 MIDDLEWARE = get_middleware()
 ROOT_URLCONF = "internal.routes"
 TEMPLATES = get_templates()

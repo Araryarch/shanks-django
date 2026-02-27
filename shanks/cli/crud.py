@@ -43,13 +43,16 @@ def create_crud_endpoint():
         encoding="utf-8"
     )
     
-    # Update entity __init__.py to import model
-    entity_init = entity_dir / "__init__.py"
-    entity_init_content = entity_init.read_text(encoding="utf-8")
-    import_line = f"from .{endpoint_name}_entity import {model_name}"
-    if import_line not in entity_init_content:
-        entity_init_content += f"\n{import_line}\n"
-        entity_init.write_text(entity_init_content, encoding="utf-8")
+    # Update models.py to import all entities
+    models_file = entity_dir.parent / "models.py"
+    if not models_file.exists():
+        models_file.write_text("# Auto-generated models file\n", encoding="utf-8")
+    
+    models_content = models_file.read_text(encoding="utf-8")
+    import_line = f"from .entity.{endpoint_name}_entity import {model_name}"
+    if import_line not in models_content:
+        models_content += f"{import_line}\n"
+        models_file.write_text(models_content, encoding="utf-8")
 
     # [2/5] Create repository
     print("[2/5] Creating repository (data access)...")
@@ -207,4 +210,5 @@ def create_crud_endpoint():
     print(f"  PUT    /api/{endpoint_plural}/<id>")
     print(f"  DELETE /api/{endpoint_plural}/<id>")
     print(f"\nNext steps:")
-    print(f"  sorm db push  # Apply database changes")
+    print(f"  sorm db push   # Apply database changes")
+    print(f"  sorm db seed   # Run seeders (optional)")

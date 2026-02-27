@@ -76,6 +76,32 @@ def create_project():
     seeds_dir = db_dir / "seeds"
     seeds_dir.mkdir(exist_ok=True)
     (seeds_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    # Create example seed file
+    example_seed = f'''"""
+Example seed file
+Run with: sorm db seed
+"""
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', '{project_name}.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+
+# Example: Create admin user
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser(
+        username='admin',
+        email='admin@example.com',
+        password='admin123'
+    )
+    print("✓ Admin user created")
+else:
+    print("ℹ Admin user already exists")
+'''
+    (seeds_dir / "example_seed.py").write_text(example_seed, encoding="utf-8")
 
     for dir_name in ["dto", "config", "utils"]:
         dir_path = project_dir / dir_name
