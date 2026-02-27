@@ -32,7 +32,7 @@ def create_crud_endpoint():
 
     # [1/5] Create entity (Django model)
     print("[1/5] Creating entity (Django model)...")
-    entity_dir = Path("entity")
+    entity_dir = Path("db/entity")
     entity_dir.mkdir(parents=True, exist_ok=True)
     if not (entity_dir / "__init__.py").exists():
         (entity_dir / "__init__.py").write_text("", encoding="utf-8")
@@ -42,6 +42,14 @@ def create_crud_endpoint():
         get_entity_template(model_name, endpoint_name),
         encoding="utf-8"
     )
+    
+    # Update entity __init__.py to import model
+    entity_init = entity_dir / "__init__.py"
+    entity_init_content = entity_init.read_text(encoding="utf-8")
+    import_line = f"from .{endpoint_name}_entity import {model_name}"
+    if import_line not in entity_init_content:
+        entity_init_content += f"\n{import_line}\n"
+        entity_init.write_text(entity_init_content, encoding="utf-8")
 
     # [2/5] Create repository
     print("[2/5] Creating repository (data access)...")
@@ -187,7 +195,7 @@ def create_crud_endpoint():
 
     print(f"\n✓ CRUD endpoint '{endpoint_name}' created successfully!")
     print(f"\nGenerated files:")
-    print(f"  - entity/{endpoint_name}_entity.py")
+    print(f"  - db/entity/{endpoint_name}_entity.py")
     print(f"  - internal/repository/{endpoint_name}_repository.py")
     print(f"  - internal/service/{endpoint_name}_service.py")
     print(f"  - internal/controller/{endpoint_name}_controller.py")

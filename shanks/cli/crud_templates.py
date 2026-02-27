@@ -3,17 +3,11 @@
 
 def get_entity_template(model_name, endpoint_name):
     """Entity (Django model) template"""
-    return f'''"""
-{model_name} Entity - Database Model
-"""
-from django.db import models
+    return f'''from django.db import models
 from django.contrib.auth.models import User
 
 
 class {model_name}(models.Model):
-    """
-    {model_name} model
-    """
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='{endpoint_name}_created')
@@ -34,7 +28,7 @@ def get_repository_template(model_name, endpoint_name):
     return f'''"""
 {model_name} Repository - Data Access Layer
 """
-from entity.{endpoint_name}_entity import {model_name}
+from db.entity.{endpoint_name}_entity import {model_name}
 
 
 def find_all(page=1, limit=10):
@@ -160,7 +154,6 @@ def get_controller_template(model_name, endpoint_name, endpoint_plural):
     return f'''"""
 {model_name} Controller - Request/Response Handler
 """
-from shanks import Response
 from internal.service import {endpoint_name}_service
 from dto.base_dto import BaseDTO
 
@@ -171,11 +164,9 @@ def list_{endpoint_plural}(req):
     limit = int(req.query.get("limit", 10))
     
     result = {endpoint_name}_service.get_{endpoint_plural}_list(page, limit)
-    return Response().json(
-        BaseDTO.success(
-            data=result["data"],
-            pagination=result["pagination"]
-        )
+    return BaseDTO.success(
+        data=result["data"],
+        pagination=result["pagination"]
     )
 
 
@@ -184,43 +175,31 @@ def get_by_id(req, id):
     result = {endpoint_name}_service.get_{endpoint_name}_by_id(id)
     
     if result is None:
-        return Response().status_code(404).json(
-            BaseDTO.error(message="Not found", status=404)
-        )
+        return BaseDTO.error(message="Not found", status=404)
     
-    return Response().json(
-        BaseDTO.success(data=result)
-    )
+    return BaseDTO.success(data=result)
 
 
 def create(req):
     """Handle create request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json(
-            BaseDTO.error(message="Authentication required", status=401)
-        )
+        return BaseDTO.error(message="Authentication required", status=401)
     
     data = req.body
     title = data.get("title")
     description = data.get("description", "")
     
     if not title:
-        return Response().status_code(400).json(
-            BaseDTO.error(message="Title is required", status=400)
-        )
+        return BaseDTO.error(message="Title is required", status=400)
     
     result = {endpoint_name}_service.create_{endpoint_name}(title, description, req.user)
-    return Response().status_code(201).json(
-        BaseDTO.success(data=result, message="Created successfully", status=201)
-    )
+    return BaseDTO.success(data=result, message="Created successfully", status=201)
 
 
 def update(req, id):
     """Handle update request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json(
-            BaseDTO.error(message="Authentication required", status=401)
-        )
+        return BaseDTO.error(message="Authentication required", status=401)
     
     data = req.body
     title = data.get("title")
@@ -229,32 +208,22 @@ def update(req, id):
     result = {endpoint_name}_service.update_{endpoint_name}(id, title, description)
     
     if result is None:
-        return Response().status_code(404).json(
-            BaseDTO.error(message="Not found", status=404)
-        )
+        return BaseDTO.error(message="Not found", status=404)
     
-    return Response().json(
-        BaseDTO.success(data=result, message="Updated successfully")
-    )
+    return BaseDTO.success(data=result, message="Updated successfully")
 
 
 def delete(req, id):
     """Handle delete request"""
     if not req.user.is_authenticated:
-        return Response().status_code(401).json(
-            BaseDTO.error(message="Authentication required", status=401)
-        )
+        return BaseDTO.error(message="Authentication required", status=401)
     
     result = {endpoint_name}_service.delete_{endpoint_name}(id)
     
     if result is None:
-        return Response().status_code(404).json(
-            BaseDTO.error(message="Not found", status=404)
-        )
+        return BaseDTO.error(message="Not found", status=404)
     
-    return Response().json(
-        BaseDTO.success(data=result, message="Deleted successfully")
-    )
+    return BaseDTO.success(data=result, message="Deleted successfully")
 '''
 
 

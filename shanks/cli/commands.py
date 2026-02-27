@@ -60,7 +60,24 @@ def create_project():
         dir_path.mkdir(exist_ok=True)
         (dir_path / "__init__.py").write_text("", encoding="utf-8")
 
-    for dir_name in ["dto", "entity", "config", "utils"]:
+    # Create db structure
+    db_dir = project_dir / "db"
+    db_dir.mkdir(exist_ok=True)
+    (db_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    entity_dir = db_dir / "entity"
+    entity_dir.mkdir(exist_ok=True)
+    (entity_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    migrations_dir = db_dir / "migrations"
+    migrations_dir.mkdir(exist_ok=True)
+    (migrations_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    seeds_dir = db_dir / "seeds"
+    seeds_dir.mkdir(exist_ok=True)
+    (seeds_dir / "__init__.py").write_text("", encoding="utf-8")
+
+    for dir_name in ["dto", "config", "utils"]:
         dir_path = project_dir / dir_name
         dir_path.mkdir(exist_ok=True)
         (dir_path / "__init__.py").write_text("", encoding="utf-8")
