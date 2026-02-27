@@ -129,14 +129,23 @@ def create_project():
 
 def run_server():
     """Run Django development server"""
+    import os
+    
     print_banner()
-    print("Starting Shanks development server...\n")
+    print("Starting Shanks development server...")
+    print("Server running at http://127.0.0.1:8000/")
+    print("Press CTRL+C to stop\n")
     
     try:
-        subprocess.run(
-            [sys.executable, "manage.py", "runserver"],
-            check=True
-        )
+        # Suppress Django startup messages by redirecting to devnull
+        with open(os.devnull, 'w') as devnull:
+            process = subprocess.Popen(
+                [sys.executable, "manage.py", "runserver"],
+                stdout=devnull,
+                stderr=subprocess.STDOUT,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"}
+            )
+            process.wait()
     except KeyboardInterrupt:
         print("\n\nServer stopped.")
     except FileNotFoundError:
