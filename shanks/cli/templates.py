@@ -64,13 +64,19 @@ class BaseDTO:
 '''
 
 
-def get_health_route_template(project_name):
-    """Health check route template"""
-    return f'''"""Health Check Routes"""
-from shanks import App
+def get_health_view_template(project_name):
+    """Health check view template"""
+    return f'''"""Health Check Views"""
+from shanks import App, render
 from dto.base_dto import BaseDTO
 
 router = App()
+
+
+@router.get("/")
+def home(req):
+    """Home page"""
+    return render(req, "index.html", {{"title": "{project_name}"}})
 
 
 @router.get("/api/health")
@@ -83,12 +89,12 @@ def health(req):
 '''
 
 
-def get_routes_init_template():
-    """Routes __init__.py template"""
-    return '''"""API Routes"""
+def get_views_init_template():
+    """Views __init__.py template"""
+    return '''"""API Views"""
 
 # Import all routers
-from .health_route import router as health_router
+from .health_view import router as health_router
 
 # Export urlpatterns for Django
 urlpatterns = [*health_router]
@@ -130,8 +136,8 @@ ALLOWED_HOSTS = get_allowed_hosts()
 
 INSTALLED_APPS = get_installed_apps(["internal", "db", "dto"])
 MIDDLEWARE = get_middleware()
-ROOT_URLCONF = "internal.routes"
-TEMPLATES = get_templates()
+ROOT_URLCONF = "internal.views"
+TEMPLATES = get_templates(BASE_DIR)
 WSGI_APPLICATION = "{project_name}.wsgi.application"
 DATABASES = get_database(BASE_DIR)
 AUTH_PASSWORD_VALIDATORS = get_password_validators(DEBUG)
@@ -227,13 +233,150 @@ sorm db pull              # Pull database schema
 ```
 {project_name}/
 ├── internal/
+│   ├── views/            # Views & routes
 │   ├── controller/       # Request handlers
 │   ├── service/          # Business logic
 │   ├── repository/       # Data access
-│   ├── routes/           # API routes
 │   └── middleware/       # Custom middleware
-├── entity/               # Django models
+├── db/
+│   ├── entity/           # Django models
+│   ├── migrations/       # Database migrations
+│   └── seeds/            # Database seeders
 ├── dto/                  # Data transfer objects
+├── templates/            # HTML templates
 └── {project_name}/       # Django config
 ```
+
+## Template Rendering
+
+Shanks supports Django-style template rendering:
+
+```python
+from shanks import render
+
+@router.get('/')
+def home(req):
+    return render(req, 'index.html', {{'title': 'Welcome'}})
+```
+"""
+
+
+def get_index_template(project_name):
+    """Index HTML template"""
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{{{ title }}}} - {project_name}</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }}
+        .container {{
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            text-align: center;
+        }}
+        h1 {{
+            color: #333;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }}
+        p {{
+            color: #666;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }}
+        .features {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }}
+        .feature {{
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }}
+        .feature:hover {{
+            transform: translateY(-5px);
+        }}
+        .feature-icon {{
+            font-size: 2em;
+            margin-bottom: 10px;
+        }}
+        .feature-title {{
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }}
+        .feature-desc {{
+            font-size: 0.9em;
+            color: #888;
+        }}
+        .cta {{
+            margin-top: 40px;
+        }}
+        .btn {{
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }}
+        .btn:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{{{ title|default:"{project_name}" }}}}</h1>
+        <p>{{{{ message|default:"Welcome to your Shanks Django application!" }}}}</p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Fast</div>
+                <div class="feature-desc">Express.js-like routing</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Simple</div>
+                <div class="feature-desc">Clean & intuitive API</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-title">Powerful</div>
+                <div class="feature-desc">Built on Django</div>
+            </div>
+        </div>
+        
+        <div class="cta">
+            <a href="/api/health" class="btn">Check API Health</a>
+        </div>
+    </div>
+</body>
+</html>
 """

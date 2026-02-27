@@ -20,6 +20,7 @@ from .cache import (
     smart_cache_invalidation,
     get_cache,
 )
+from .template import render, render_string, render_html
 
 __version__ = "0.2.6"
 __author__ = "Ararya"
@@ -103,6 +104,10 @@ __all__ = [
     "invalidate_cache",
     "smart_cache_invalidation",
     "get_cache",
+    # Template
+    "render",
+    "render_string",
+    "render_html",
     # ORM
     "Model",
     "User",

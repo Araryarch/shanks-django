@@ -16,7 +16,9 @@ def main():
         print("  shanks run                       Start development server")
         print("  shanks create <name> --crud      Generate CRUD endpoint")
         print("  shanks generate django           Convert to pure Django (safe)")
-        print("  shanks kamusari                  Convert to Django in-place (destructive)")
+        print(
+            "  shanks kamusari                  Convert to Django in-place (destructive)"
+        )
         sys.exit(1)
 
     command = sys.argv[1]

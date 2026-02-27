@@ -149,12 +149,18 @@ def get_middleware():
     ]
 
 
-def get_templates():
+def get_templates(base_dir=None):
     """Get default TEMPLATES configuration"""
+    dirs = []
+    if base_dir:
+        templates_dir = base_dir.parent / "templates"
+        if templates_dir.exists():
+            dirs.append(templates_dir)
+
     return [
         {
             "BACKEND": "django.template.backends.django.DjangoTemplates",
-            "DIRS": [],
+            "DIRS": dirs,
             "APP_DIRS": True,
             "OPTIONS": {
                 "context_processors": [

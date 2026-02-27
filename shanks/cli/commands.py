@@ -55,7 +55,7 @@ def create_project():
     internal_dir.mkdir(exist_ok=True)
     (internal_dir / "__init__.py").write_text("", encoding="utf-8")
 
-    for subdir in ["controller", "repository", "service", "middleware", "routes"]:
+    for subdir in ["controller", "repository", "service", "middleware", "views"]:
         dir_path = internal_dir / subdir
         dir_path.mkdir(exist_ok=True)
         (dir_path / "__init__.py").write_text("", encoding="utf-8")
@@ -64,19 +64,19 @@ def create_project():
     db_dir = project_dir / "db"
     db_dir.mkdir(exist_ok=True)
     (db_dir / "__init__.py").write_text("", encoding="utf-8")
-    
+
     entity_dir = db_dir / "entity"
     entity_dir.mkdir(exist_ok=True)
     (entity_dir / "__init__.py").write_text("", encoding="utf-8")
-    
+
     migrations_dir = db_dir / "migrations"
     migrations_dir.mkdir(exist_ok=True)
     (migrations_dir / "__init__.py").write_text("", encoding="utf-8")
-    
+
     seeds_dir = db_dir / "seeds"
     seeds_dir.mkdir(exist_ok=True)
     (seeds_dir / "__init__.py").write_text("", encoding="utf-8")
-    
+
     # Create example seed file
     example_seed = f'''"""
 Example seed file
@@ -108,20 +108,29 @@ else:
         dir_path.mkdir(exist_ok=True)
         (dir_path / "__init__.py").write_text("", encoding="utf-8")
 
+    # Create templates directory
+    templates_dir = project_dir / "templates"
+    templates_dir.mkdir(exist_ok=True)
+
+    # Create example template
+    (templates_dir / "index.html").write_text(
+        get_index_template(project_name), encoding="utf-8"
+    )
+
     # Create base DTO
-    print("[2/5] Creating base DTO and routes...")
+    print("[2/5] Creating base DTO and views...")
     (project_dir / "dto" / "base_dto.py").write_text(
         get_base_dto_template(), encoding="utf-8"
     )
-    
-    # Create health route file
-    (internal_dir / "routes" / "health_route.py").write_text(
-        get_health_route_template(project_name), encoding="utf-8"
+
+    # Create health view file
+    (internal_dir / "views" / "health_view.py").write_text(
+        get_health_view_template(project_name), encoding="utf-8"
     )
-    
-    # Create routes __init__.py
-    (internal_dir / "routes" / "__init__.py").write_text(
-        get_routes_init_template(), encoding="utf-8"
+
+    # Create views __init__.py (routes)
+    (internal_dir / "views" / "__init__.py").write_text(
+        get_views_init_template(), encoding="utf-8"
     )
 
     # Create middleware
@@ -173,20 +182,20 @@ else:
 def run_server():
     """Run Django development server"""
     import os
-    
+
     print_banner()
     print("Starting Shanks development server...")
     print("Server running at http://127.0.0.1:8000/")
     print("Press CTRL+C to stop\n")
-    
+
     try:
         # Suppress Django startup messages by redirecting to devnull
-        with open(os.devnull, 'w') as devnull:
+        with open(os.devnull, "w") as devnull:
             process = subprocess.Popen(
                 [sys.executable, "manage.py", "runserver"],
                 stdout=devnull,
                 stderr=subprocess.STDOUT,
-                env={**os.environ, "PYTHONUNBUFFERED": "1"}
+                env={**os.environ, "PYTHONUNBUFFERED": "1"},
             )
             process.wait()
     except KeyboardInterrupt:

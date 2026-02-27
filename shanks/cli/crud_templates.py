@@ -3,7 +3,7 @@
 
 def get_entity_template(model_name, endpoint_name):
     """Entity (Django model) template"""
-    return f'''from django.db import models
+    return f"""from django.db import models
 from django.contrib.auth.models import User
 
 
@@ -20,7 +20,7 @@ class {model_name}(models.Model):
 
     def __str__(self):
         return self.title
-'''
+"""
 
 
 def get_repository_template(model_name, endpoint_name):
