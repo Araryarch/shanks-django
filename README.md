@@ -460,14 +460,14 @@ app.include(auth, users, posts)
 
 ### Django Admin Panel
 
-Shanks supports Django admin panel out of the box!
+Shanks uses **Unfold** - a modern Django admin theme with Tailwind CSS!
 
 ```python
 # In your urls.py
 from shanks import enable_admin
 
 urlpatterns = [
-    *enable_admin(),  # Admin at /admin/
+    *enable_admin(),  # Admin at /admin/ with Unfold theme
     *your_routes,
 ]
 
@@ -478,20 +478,28 @@ urlpatterns = [
 ]
 ```
 
+Features:
+- 🎨 Modern Unfold theme with Shanks red color scheme
+- 🎯 Tailwind CSS based design
+- 🌙 Dark mode support
+- 📱 Fully responsive
+- 🔍 Advanced search and filters
+- 📊 Beautiful dashboard
+- 🚀 Zero configuration - works out of the box
+
 #### Register Models
 
 ```python
 # In your entity file or admin.py
 from shanks import register_model
+from unfold.admin import ModelAdmin
 from db.entity.posts_entity import Posts
 
-# Simple registration
+# Simple registration (uses Unfold ModelAdmin automatically)
 register_model(Posts)
 
-# With custom admin
-from django.contrib import admin
-
-class PostsAdmin(admin.ModelAdmin):
+# With custom Unfold admin
+class PostsAdmin(ModelAdmin):
     list_display = ['id', 'title', 'created_at']
     search_fields = ['title', 'content']
     list_filter = ['created_at']
@@ -521,7 +529,9 @@ sorm createsuperuser
 python manage.py createsuperuser
 ```
 
-Visit http://127.0.0.1:8000/admin/ to access the admin panel!
+Visit http://127.0.0.1:8000/admin/ to access the beautiful Unfold admin panel!
+
+**Note**: Unfold theme is automatically configured with Shanks red/black/white color scheme. No additional setup needed!
 
 ### Built-in Caching (Enabled by Default!)
 

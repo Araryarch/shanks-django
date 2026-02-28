@@ -5,14 +5,16 @@ All notable changes to Shanks Django will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- **Django Admin Panel Support**: Full Django admin integration
-  - New `enable_admin()` function to add admin panel to urlpatterns
-  - New `register_model()` function to register models with admin
-  - New `unregister_model()` function to remove models from admin
-  - New `customize_admin()` function to customize admin appearance
-  - Works seamlessly with existing Shanks routes
-  - Access at `/admin/` by default (customizable path)
-  - Full Django admin features: list, create, edit, delete, search, filters
+- **Unfold Admin Theme Integration**: Modern Django admin with Tailwind CSS
+  - Integrated `django-unfold` as default admin theme
+  - Automatic setup with `enable_admin()` function
+  - Custom Shanks red/black/white color scheme
+  - Modern, responsive design with Tailwind CSS
+  - Dark mode support
+  - Advanced search and filters
+  - Beautiful dashboard
+  - Zero configuration needed
+  - Auto-registers models with Unfold ModelAdmin
   - Example: `urlpatterns = [*enable_admin(), *your_routes]`
 
 - **SORM createsuperuser Command**: Easy admin user creation
@@ -21,11 +23,22 @@ All notable changes to Shanks Django will be documented in this file.
   - Simpler than using Django's manage.py
   - Integrated with SORM CLI workflow
 
+### Changed
+- **Admin Theme**: Replaced custom templates with Unfold theme
+  - Removed custom Shanks admin templates
+  - Now uses professional Unfold theme
+  - Better UX and more features
+  - Easier to maintain and update
+
+### Dependencies
+- Added `django-unfold>=0.40.0` as core dependency
+- Unfold automatically configured with Shanks color scheme
+
 ### Documentation
-- Added Django Admin Panel section to README
-- Examples for registering models and customizing admin
+- Updated Django Admin Panel section in README
+- Added Unfold theme documentation
+- Examples for registering models with Unfold ModelAdmin
 - Instructions for creating superuser with SORM
-- Complete ADMIN_PANEL_EXAMPLE.md guide
 
 ## [0.4.0] - 2026-02-28
 

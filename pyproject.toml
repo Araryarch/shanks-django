@@ -32,7 +32,8 @@ classifiers = [
 ]
 dependencies = [
   "django>=3.2",
-  "pyjwt>=2.0.0"
+  "pyjwt>=2.0.0",
+  "django-unfold>=0.40.0"
 ]
 
 [project.optional-dependencies]

@@ -80,6 +80,7 @@ def __getattr__(name):
         "get_middleware",
         "get_templates",
         "get_password_validators",
+        "get_unfold_config",
     ]:
         from . import config
 
@@ -182,6 +183,7 @@ __all__ = [
     "get_middleware",
     "get_templates",
     "get_password_validators",
+    "get_unfold_config",
     # Django
     "IntegrityError",
     "settings",

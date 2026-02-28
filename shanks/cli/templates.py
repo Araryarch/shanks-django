@@ -148,6 +148,7 @@ from shanks import (
     get_middleware,
     get_templates,
     get_password_validators,
+    get_unfold_config,
 )
 
 BASE_DIR = get_base_dir(__file__)
@@ -174,6 +175,9 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Unfold Admin Theme (Shanks Red/Black/White)
+UNFOLD = get_unfold_config()
 '''
 
 

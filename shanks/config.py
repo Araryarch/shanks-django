@@ -121,8 +121,9 @@ def get_database(base_dir):
 
 
 def get_installed_apps(extra_apps=None):
-    """Get default INSTALLED_APPS"""
+    """Get default INSTALLED_APPS with Unfold admin theme"""
     apps = [
+        "unfold",  # Unfold admin theme - MUST be before django.contrib.admin
         "django.contrib.admin",
         "django.contrib.auth",
         "django.contrib.contenttypes",
@@ -187,3 +188,36 @@ def get_password_validators(debug=True):
         {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
         {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     ]
+
+
+def get_unfold_config():
+    """Get Unfold admin theme configuration with Shanks red/black/white color scheme"""
+    return {
+        "SITE_TITLE": env("ADMIN_SITE_TITLE", "Shanks Admin"),
+        "SITE_HEADER": env("ADMIN_SITE_HEADER", "SHANKS ADMINISTRATION"),
+        "SITE_URL": "/",
+        "SITE_ICON": None,
+        "SITE_LOGO": None,
+        "SITE_SYMBOL": "speed",
+        "SHOW_HISTORY": True,
+        "SHOW_VIEW_ON_SITE": True,
+        "COLORS": {
+            "primary": {
+                "50": "239 68 68",   # Shanks Red
+                "100": "239 68 68",
+                "200": "239 68 68",
+                "300": "239 68 68",
+                "400": "239 68 68",
+                "500": "239 68 68",
+                "600": "220 38 38",  # Darker red
+                "700": "185 28 28",
+                "800": "153 27 27",
+                "900": "127 29 29",
+                "950": "127 29 29",
+            },
+        },
+        "SIDEBAR": {
+            "show_search": True,
+            "show_all_applications": True,
+        },
+    }
