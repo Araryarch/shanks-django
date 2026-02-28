@@ -17,6 +17,8 @@ pip install shanks-django
 
 -  **Express.js-like syntax** - Familiar routing
 -  **Prisma-like ORM** - Modern database queries
+-  **Flexible CRUD generation** - Generate only what you need (-c, -r, -u, -d flags)
+-  **Built-in JWT authentication** - Secure endpoints with --auth flag
 -  **Auto-caching enabled** - GET requests cached by default (10x faster!)
 -  **Smart cache invalidation** - Auto-clear on POST/PUT/DELETE
 -  **Route grouping** - Organize routes like Gin (Go)
@@ -32,11 +34,13 @@ pip install shanks-django
 shanks new myproject
 cd myproject
 
-# Generate CRUD endpoints
-shanks create posts --crud
-
-# Generate auth endpoints  
+# Generate auth endpoints
 shanks create auth --simple
+
+# Generate CRUD endpoints
+shanks create products              # Full CRUD
+shanks create orders -c -r          # Only Create & Read
+shanks create reviews --crud --auth # Full CRUD with JWT auth
 
 # Run migrations
 sorm make
@@ -50,14 +54,16 @@ shanks run
 ```
 
 Visit:
-- API: http://127.0.0.1:8000/api/health
+- API: http://127.0.0.1:8000/api/v1/health
+- Auth: http://127.0.0.1:8000/api/v1/auth/register
 - Swagger: http://127.0.0.1:8000/docs
 
 That's it! Your API now has:
+- ✅ JWT authentication (register, login, me)
+- ✅ Flexible CRUD endpoints (only what you need)
 - ✅ Auto-caching enabled (10x faster GET requests)
 - ✅ Smart cache invalidation on writes
 - ✅ Swagger documentation
-- ✅ CRUD endpoints with pagination
 
 ## 🛠️ CLI Commands
 
@@ -101,83 +107,144 @@ myproject/
 ### Generate CRUD Endpoints
 
 ```bash
-# Generate full CRUD dengan model
+# Generate full CRUD (default)
+shanks create posts
+
+# Generate full CRUD (explicit)
 shanks create posts --crud
+
+# Generate specific operations only
+shanks create posts -c -r        # Only Create and Read
+shanks create posts -c -r -u     # Create, Read, Update
+shanks create posts -d           # Only Delete
+
+# Generate with JWT authentication
+shanks create posts --crud --auth    # Full CRUD, all protected
+shanks create posts -c --auth        # Only Create with auth
+shanks create posts -c -r --auth     # Create and Read with auth
 ```
 
-Ini akan create:
-- `app/models/posts.py` - Model dengan SORM
-- `app/routes/posts.py` - Complete CRUD routes
+**Flags:**
+- `-c` = Create operation
+- `-r` = Read operations (list + get by ID)
+- `-u` = Update operation
+- `-d` = Delete operation
+- `--crud` = All operations (same as default)
+- `--auth` = Require JWT authentication for all operations
 
-Yang di-generate:
-- ✅ List dengan pagination (page, limit)
-- ✅ Get by ID (findById)
-- ✅ Create
-- ✅ Update
-- ✅ Delete
-- ✅ Auth checks
+Ini akan create:
+- `db/entity/posts_entity.py` - Django model
+- `internal/repository/posts_repository.py` - Data access layer
+- `internal/service/posts_service.py` - Business logic
+- `internal/controller/posts_controller.py` - Request handlers
+- `internal/routes/posts_route.py` - API routes
+
+Yang di-generate (tergantung flags):
+- ✅ List dengan pagination (page, limit) - jika `-r`
+- ✅ Get by ID - jika `-r`
+- ✅ Create - jika `-c`
+- ✅ Update - jika `-u`
+- ✅ Delete - jika `-d`
+- ✅ JWT auth middleware - jika `--auth`
 - ✅ Error handling
+- ✅ BaseDTO response format
 
 Contoh hasil generate:
 
 ```python
-# app/routes/posts.py
-from shanks import App, Response
-from app.models import Post
+# internal/routes/posts_route.py
+from shanks import App
+from internal.controller import posts_controller
+from internal.middleware.auth_middleware import jwt_auth_middleware  # if --auth
 
-app = App()
+router = App(prefix='/api/v1/posts')
 
-@app.get('api/posts')
-def list_posts(req):
-    page = int(req.query.get('page', 1))
-    limit = int(req.query.get('limit', 10))
-    posts = Post.find_many()
-    return {'posts': [...], 'page': page, 'limit': limit}
+# Apply auth middleware if --auth flag used
+# router.use(jwt_auth_middleware)
 
-@app.get('api/posts/<post_id>')
-def get_post(req, post_id):
-    post = Post.find_unique(id=post_id)
-    if not post:
-        return Response().status_code(404).json({'error': 'Not found'})
-    return {'post': {...}}
+@router.get('/')
+def list_posts_route(req):
+    return posts_controller.list_posts(req)
 
-@app.post('api/posts')
-def create_post(req):
-    post = Post.create(**req.body)
-    return Response().status_code(201).json({'id': post.id})
+@router.get('/<id>')
+def get_posts_route(req, id):
+    return posts_controller.get_by_id(req, id)
 
-@app.put('api/posts/<post_id>')
-def update_post(req, post_id):
-    post = Post.find_unique(id=post_id)
-    post.update_self(**req.body)
-    return {'updated': True}
+@router.post('/')
+def create_posts_route(req):
+    return posts_controller.create(req)
 
-@app.delete('api/posts/<post_id>')
-def delete_post(req, post_id):
-    post = Post.find_unique(id=post_id)
-    post.delete_self()
-    return {'deleted': True}
+@router.put('/<id>')
+def update_posts_route(req, id):
+    return posts_controller.update(req, id)
+
+@router.delete('/<id>')
+def delete_posts_route(req, id):
+    return posts_controller.delete(req, id)
+```
+
+**Examples:**
+
+```bash
+# Blog API - full CRUD without auth
+shanks create posts
+
+# E-commerce - products with read-only public access
+shanks create products -r
+
+# Reviews - full CRUD with authentication required
+shanks create reviews --crud --auth
+
+# Orders - create and read only, with auth
+shanks create orders -c -r --auth
+
+# Admin actions - delete only with auth
+shanks create reports -d --auth
 ```
 
 ### Generate Auth Endpoints
 
 ```bash
-# Simple auth: /login, /register, /me
+# Simple auth: register, login, logout, me
 shanks create auth --simple
 
-# Complete auth: + email verification
+# Complete auth: + email verification, password reset
 shanks create auth --complete
 ```
 
 Yang di-generate untuk `--simple`:
-- POST `/api/auth/register` - Register user baru
-- POST `/api/auth/login` - Login user
-- GET `/api/auth/me` - Get current user
+- POST `/api/v1/auth/register` - Register user baru
+- POST `/api/v1/auth/login` - Login user (returns JWT token)
+- POST `/api/v1/auth/logout` - Logout user
+- GET `/api/v1/auth/me` - Get current user info
+- `internal/middleware/auth_middleware.py` - JWT middleware
 
 Yang di-generate untuk `--complete`:
 - Semua dari `--simple`
-- POST `/api/auth/verify` - Email verification
-- POST `/api/auth/resend` - Resend verification email
+- POST `/api/v1/auth/verify` - Email verification
+- POST `/api/v1/auth/resend` - Resend verification email
+- POST `/api/v1/auth/forgot-password` - Request password reset
+- POST `/api/v1/auth/reset-password` - Reset password with token
+
+**Middleware yang di-generate:**
+- `jwt_auth_middleware` - Require valid JWT token
+- `optional_auth_middleware` - Optional JWT token (user available if provided)
+
+**Usage:**
+
+```python
+# Protect routes with auth middleware
+from shanks import App
+from internal.middleware.auth_middleware import jwt_auth_middleware
+
+router = App(prefix='/api/v1/posts')
+router.use(jwt_auth_middleware)  # All routes require auth
+
+@router.post('/')
+def create_post(req):
+    user = req.user  # Authenticated user
+    return {'user_id': user.id}
+```
 
 ### Generate Django Structure
 
