@@ -283,16 +283,19 @@ Kenapa perlu ini?
 
 ```bash
 # Create migrations
-sorm make
+sorm makemigrations
 
 # Apply migrations
-sorm db migrate
+sorm migrate
 
 # Create + apply migrations (one command)
 sorm db push
 
 # Reset database (flush all data)
 sorm db reset
+
+# Create admin superuser
+sorm createsuperuser
 
 # Open database shell
 sorm db shell
@@ -302,9 +305,10 @@ sorm studio
 ```
 
 Command `sorm` mirip dengan Prisma CLI:
-- `sorm make` = `prisma migrate dev --create-only`
-- `sorm db migrate` = `prisma migrate deploy`
+- `sorm makemigrations` = `prisma migrate dev --create-only`
+- `sorm migrate` = `prisma migrate deploy`
 - `sorm db push` = `prisma db push`
+- `sorm createsuperuser` = Create admin user for Django admin panel
 - `sorm studio` = `prisma studio` (tapi pake Django Admin)
 
 ### Auto-Type Detection di Routes
@@ -453,6 +457,71 @@ def list_posts(req): ...
 # Include all
 app.include(auth, users, posts)
 ```
+
+### Django Admin Panel
+
+Shanks supports Django admin panel out of the box!
+
+```python
+# In your urls.py
+from shanks import enable_admin
+
+urlpatterns = [
+    *enable_admin(),  # Admin at /admin/
+    *your_routes,
+]
+
+# Or custom path
+urlpatterns = [
+    *enable_admin(path='dashboard/'),  # Admin at /dashboard/
+    *your_routes,
+]
+```
+
+#### Register Models
+
+```python
+# In your entity file or admin.py
+from shanks import register_model
+from db.entity.posts_entity import Posts
+
+# Simple registration
+register_model(Posts)
+
+# With custom admin
+from django.contrib import admin
+
+class PostsAdmin(admin.ModelAdmin):
+    list_display = ['id', 'title', 'created_at']
+    search_fields = ['title', 'content']
+    list_filter = ['created_at']
+
+register_model(Posts, PostsAdmin)
+```
+
+#### Customize Admin
+
+```python
+from shanks import customize_admin
+
+customize_admin(
+    site_header='My App Admin',
+    site_title='My App',
+    index_title='Dashboard'
+)
+```
+
+#### Create Superuser
+
+```bash
+# Create admin user with SORM
+sorm createsuperuser
+
+# Or with Django command
+python manage.py createsuperuser
+```
+
+Visit http://127.0.0.1:8000/admin/ to access the admin panel!
 
 ### Built-in Caching (Enabled by Default!)
 

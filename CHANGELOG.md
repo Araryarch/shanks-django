@@ -2,6 +2,31 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Django Admin Panel Support**: Full Django admin integration
+  - New `enable_admin()` function to add admin panel to urlpatterns
+  - New `register_model()` function to register models with admin
+  - New `unregister_model()` function to remove models from admin
+  - New `customize_admin()` function to customize admin appearance
+  - Works seamlessly with existing Shanks routes
+  - Access at `/admin/` by default (customizable path)
+  - Full Django admin features: list, create, edit, delete, search, filters
+  - Example: `urlpatterns = [*enable_admin(), *your_routes]`
+
+- **SORM createsuperuser Command**: Easy admin user creation
+  - New `sorm createsuperuser` command
+  - Interactive prompt for username, email, and password
+  - Simpler than using Django's manage.py
+  - Integrated with SORM CLI workflow
+
+### Documentation
+- Added Django Admin Panel section to README
+- Examples for registering models and customizing admin
+- Instructions for creating superuser with SORM
+- Complete ADMIN_PANEL_EXAMPLE.md guide
+
 ## [0.4.0] - 2026-02-28
 
 ### Added

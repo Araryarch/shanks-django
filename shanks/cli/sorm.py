@@ -19,6 +19,7 @@ def sorm_main():
         print("  sorm db pull              Show current database schema")
         print("  sorm db reset             Reset database (flush)")
         print("  sorm db seed              Run all seeders")
+        print("  sorm createsuperuser      Create admin superuser")
         print("  sorm makemigrations       Create new migrations")
         print("  sorm migrate              Apply migrations")
         print("  sorm showmigrations       Show migration status")
@@ -124,6 +125,14 @@ def sorm_main():
             print("Available: push, pull, reset, seed")
             sys.exit(1)
 
+    elif command == "createsuperuser":
+        # Create superuser
+        print_banner()
+        print("Create Admin Superuser\n")
+        subprocess.run(
+            [sys.executable, "manage.py", "createsuperuser"], check=True
+        )
+
     elif command == "makemigrations":
         # Pass through to Django
         subprocess.run(
@@ -145,10 +154,11 @@ def sorm_main():
     else:
         print(f"Unknown command: {command}")
         print("\nAvailable commands:")
-        print("  db              - Database operations (push, pull, reset, seed)")
-        print("  makemigrations  - Create new migrations")
-        print("  migrate         - Apply migrations")
-        print("  showmigrations  - Show migration status")
+        print("  db                - Database operations (push, pull, reset, seed)")
+        print("  createsuperuser   - Create admin superuser")
+        print("  makemigrations    - Create new migrations")
+        print("  migrate           - Apply migrations")
+        print("  showmigrations    - Show migration status")
         sys.exit(1)
 
 

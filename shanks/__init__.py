@@ -21,6 +21,7 @@ from .cache import (
     get_cache,
 )
 from .template import render, render_string, render_html
+from .admin import enable_admin, register_model, unregister_model, customize_admin
 
 __version__ = "0.4.0"
 __author__ = "Ararya"
@@ -126,6 +127,11 @@ __all__ = [
     "render",
     "render_string",
     "render_html",
+    # Admin
+    "enable_admin",
+    "register_model",
+    "unregister_model",
+    "customize_admin",
     # ORM
     "Model",
     "User",
