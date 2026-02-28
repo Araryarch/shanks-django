@@ -94,24 +94,28 @@ class UserProxy:
     def __getattr__(self, name):
         """Lazy import Django User and forward attribute access"""
         from django.contrib.auth.models import User as DjangoUser
+
         return getattr(DjangoUser, name)
 
     @classmethod
     def find_many(cls, **filters):
         """Find many users"""
         from django.contrib.auth.models import User as DjangoUser
+
         return DjangoUser.objects.filter(**filters)
 
     @classmethod
     def find_first(cls, **filters):
         """Find first user"""
         from django.contrib.auth.models import User as DjangoUser
+
         return DjangoUser.objects.filter(**filters).first()
 
     @classmethod
     def find_unique(cls, **filters):
         """Find unique user"""
         from django.contrib.auth.models import User as DjangoUser
+
         try:
             return DjangoUser.objects.get(**filters)
         except DjangoUser.DoesNotExist:
@@ -121,6 +125,7 @@ class UserProxy:
     def create(cls, username, email, password, **kwargs):
         """Create user"""
         from django.contrib.auth.models import User as DjangoUser
+
         return DjangoUser.objects.create_user(
             username=username, email=email, password=password, **kwargs
         )
@@ -129,6 +134,7 @@ class UserProxy:
     def count(cls, **filters):
         """Count users"""
         from django.contrib.auth.models import User as DjangoUser
+
         if filters:
             return DjangoUser.objects.filter(**filters).count()
         return DjangoUser.objects.count()

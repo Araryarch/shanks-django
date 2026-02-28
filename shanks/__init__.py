@@ -87,16 +87,19 @@ def __getattr__(name):
     # Django exceptions
     if name == "IntegrityError":
         from django.db import IntegrityError
+
         return IntegrityError
 
     # Django settings
     if name == "settings":
         from django.conf import settings
+
         return settings
 
     # Django mail
     if name == "send_mail":
         from django.core.mail import send_mail
+
         return send_mail
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

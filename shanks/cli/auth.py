@@ -2,8 +2,14 @@
 
 import sys
 from pathlib import Path
-from .auth_templates import get_simple_auth_controller_template, get_simple_auth_route_template
-from .auth_complete_templates import get_complete_auth_controller_template, get_complete_auth_route_template
+from .auth_templates import (
+    get_simple_auth_controller_template,
+    get_simple_auth_route_template,
+)
+from .auth_complete_templates import (
+    get_complete_auth_controller_template,
+    get_complete_auth_route_template,
+)
 from .auth_middleware_template import get_auth_middleware_template
 
 
@@ -117,7 +123,9 @@ def create_complete_auth():
         (controller_dir / "__init__.py").write_text("", encoding="utf-8")
 
     controller_file = controller_dir / "auth_controller.py"
-    controller_file.write_text(get_complete_auth_controller_template(), encoding="utf-8")
+    controller_file.write_text(
+        get_complete_auth_controller_template(), encoding="utf-8"
+    )
 
     # Update controller __init__.py
     controller_init_file = controller_dir / "__init__.py"
@@ -165,7 +173,9 @@ def create_complete_auth():
     print(f"  - internal/middleware/auth_middleware.py")
     print(f"  - internal/routes/auth_route.py")
     print(f"\nEndpoints:")
-    print(f"  POST   /api/v1/auth/register         - Register (sends verification email)")
+    print(
+        f"  POST   /api/v1/auth/register         - Register (sends verification email)"
+    )
     print(f"  POST   /api/v1/auth/verify-email     - Verify email with code")
     print(f"  POST   /api/v1/auth/resend-verification - Resend verification")
     print(f"  POST   /api/v1/auth/login            - Login user")

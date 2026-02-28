@@ -19,7 +19,7 @@ def create_crud_endpoint():
         sys.exit(1)
 
     endpoint_name = sys.argv[2]
-    
+
     # Parse flags
     has_crud_flag = "--crud" in sys.argv
     has_c = "-c" in sys.argv
@@ -27,7 +27,7 @@ def create_crud_endpoint():
     has_u = "-u" in sys.argv
     has_d = "-d" in sys.argv
     has_auth = "--auth" in sys.argv
-    
+
     # Determine which operations to generate
     # Default: full CRUD if no flags specified
     if not (has_crud_flag or has_c or has_r or has_u or has_d):
@@ -38,13 +38,8 @@ def create_crud_endpoint():
         operations = {"create": True, "read": True, "update": True, "delete": True}
     else:
         # Individual flags
-        operations = {
-            "create": has_c,
-            "read": has_r,
-            "update": has_u,
-            "delete": has_d
-        }
-    
+        operations = {"create": has_c, "read": has_r, "update": has_u, "delete": has_d}
+
     # Convert endpoint name to model name (capitalize first letter)
     model_name = endpoint_name.capitalize()
 
@@ -149,8 +144,10 @@ def create_crud_endpoint():
 
     route_file = routes_dir / f"{endpoint_name}_route.py"
     route_file.write_text(
-        get_route_template(model_name, endpoint_name, endpoint_name, operations, has_auth), 
-        encoding="utf-8"
+        get_route_template(
+            model_name, endpoint_name, endpoint_name, operations, has_auth
+        ),
+        encoding="utf-8",
     )
 
     # Auto-register routes in __init__.py
@@ -212,10 +209,11 @@ def create_crud_endpoint():
         elif f"*{endpoint_name}_router" not in routes_init_content:
             # Already has routers, add new one before closing bracket
             import re
+
             routes_init_content = re.sub(
-                r'urlpatterns = \[(.*?)\]',
+                r"urlpatterns = \[(.*?)\]",
                 lambda m: f"urlpatterns = [{m.group(1)}, *{endpoint_name}_router]",
-                routes_init_content
+                routes_init_content,
             )
 
         routes_init_file.write_text(routes_init_content, encoding="utf-8")
@@ -244,10 +242,10 @@ def create_crud_endpoint():
     if operations["delete"]:
         auth_marker = " 🔒" if has_auth else ""
         print(f"  DELETE /api/v1/{endpoint_name}/<id>{auth_marker}")
-    
+
     if has_auth:
         print(f"\n🔒 All endpoints require JWT authentication")
-    
+
     print(f"\nNext steps:")
     print(f"  python manage.py makemigrations")
     print(f"  python manage.py migrate")
