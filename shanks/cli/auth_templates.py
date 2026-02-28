@@ -149,27 +149,25 @@ Authentication Routes
 from shanks import App
 from internal.controller import auth_controller
 
-router = App()
-
 # Group all auth routes under /api/v1/auth
-auth_routes = router.group('/api/v1/auth')
+router = App(prefix='/api/v1/auth')
 
-@auth_routes.post('/register')
+@router.post('/register')
 def register_route(req):
     """Register new user"""
     return auth_controller.register(req)
 
-@auth_routes.post('/login')
+@router.post('/login')
 def login_route(req):
     """Login user"""
     return auth_controller.login_user(req)
 
-@auth_routes.post('/logout')
+@router.post('/logout')
 def logout_route(req):
     """Logout user"""
     return auth_controller.logout_user(req)
 
-@auth_routes.get('/me')
+@router.get('/me')
 def me_route(req):
     """Get current user info"""
     return auth_controller.get_current_user(req)

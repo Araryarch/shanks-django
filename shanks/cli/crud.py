@@ -9,23 +9,51 @@ from .crud_templates import *
 def create_crud_endpoint():
     """Generate CRUD endpoint with full layered architecture"""
     if len(sys.argv) < 3:
-        print("Usage: shanks create <endpoint_name> --crud")
+        print("Usage: shanks create <endpoint_name> [--crud|-c|-r|-u|-d] [--auth]")
+        print("\nExamples:")
+        print("  shanks create books              # Default: full CRUD")
+        print("  shanks create books --crud       # Full CRUD")
+        print("  shanks create books -c -r        # Only Create and Read")
+        print("  shanks create books -c --auth    # Only Create with auth required")
+        print("  shanks create books --crud --auth # Full CRUD, all protected")
         sys.exit(1)
 
     endpoint_name = sys.argv[2]
-
-    # Check if --crud flag is present
-    if "--crud" not in sys.argv:
-        print("Error: --crud flag is required")
-        print("Usage: shanks create <endpoint_name> --crud")
-        sys.exit(1)
-
+    
+    # Parse flags
+    has_crud_flag = "--crud" in sys.argv
+    has_c = "-c" in sys.argv
+    has_r = "-r" in sys.argv
+    has_u = "-u" in sys.argv
+    has_d = "-d" in sys.argv
+    has_auth = "--auth" in sys.argv
+    
+    # Determine which operations to generate
+    # Default: full CRUD if no flags specified
+    if not (has_crud_flag or has_c or has_r or has_u or has_d):
+        # Default behavior: full CRUD
+        operations = {"create": True, "read": True, "update": True, "delete": True}
+    elif has_crud_flag:
+        # --crud flag: all operations
+        operations = {"create": True, "read": True, "update": True, "delete": True}
+    else:
+        # Individual flags
+        operations = {
+            "create": has_c,
+            "read": has_r,
+            "update": has_u,
+            "delete": has_d
+        }
+    
     # Convert endpoint name to model name (capitalize first letter)
     model_name = endpoint_name.capitalize()
 
-    print(f"\nGenerating CRUD endpoint: {endpoint_name}")
+    print(f"\nGenerating endpoint: {endpoint_name}")
     print(f"Model: {model_name}")
-    print(f"Endpoint: /api/{endpoint_name}\n")
+    print(f"Operations: {', '.join([k.upper() for k, v in operations.items() if v])}")
+    if has_auth:
+        print(f"Auth: Required for all operations")
+    print(f"Endpoint: /api/v1/{endpoint_name}\n")
 
     # [1/5] Create entity (Django model)
     print("[1/5] Creating entity (Django model)...")
@@ -59,7 +87,7 @@ def create_crud_endpoint():
 
     repository_file = repository_dir / f"{endpoint_name}_repository.py"
     repository_file.write_text(
-        get_repository_template(model_name, endpoint_name), encoding="utf-8"
+        get_repository_template(model_name, endpoint_name, operations), encoding="utf-8"
     )
 
     # Update repository __init__.py
@@ -79,7 +107,7 @@ def create_crud_endpoint():
 
     service_file = service_dir / f"{endpoint_name}_service.py"
     service_file.write_text(
-        get_service_template(model_name, endpoint_name, endpoint_name),
+        get_service_template(model_name, endpoint_name, endpoint_name, operations),
         encoding="utf-8",
     )
 
@@ -100,7 +128,7 @@ def create_crud_endpoint():
 
     controller_file = controller_dir / f"{endpoint_name}_controller.py"
     controller_file.write_text(
-        get_controller_template(model_name, endpoint_name, endpoint_name),
+        get_controller_template(model_name, endpoint_name, endpoint_name, operations),
         encoding="utf-8",
     )
 
@@ -121,7 +149,8 @@ def create_crud_endpoint():
 
     route_file = routes_dir / f"{endpoint_name}_route.py"
     route_file.write_text(
-        get_route_template(model_name, endpoint_name, endpoint_name), encoding="utf-8"
+        get_route_template(model_name, endpoint_name, endpoint_name, operations, has_auth), 
+        encoding="utf-8"
     )
 
     # Auto-register routes in __init__.py
@@ -182,17 +211,19 @@ def create_crud_endpoint():
             )
         elif f"*{endpoint_name}_router" not in routes_init_content:
             # Already has routers, add new one before closing bracket
-            routes_init_content = routes_init_content.replace(
-                "urlpatterns = [",
-                f"urlpatterns = [*health_router, *{endpoint_name}_router, ",
-            ).replace("[*health_router, *health_router", "[*health_router")
+            import re
+            routes_init_content = re.sub(
+                r'urlpatterns = \[(.*?)\]',
+                lambda m: f"urlpatterns = [{m.group(1)}, *{endpoint_name}_router]",
+                routes_init_content
+            )
 
         routes_init_file.write_text(routes_init_content, encoding="utf-8")
         print(f"  ✓ Updated internal/routes/__init__.py")
     else:
         print(f"  ✗ internal/routes/__init__.py not found")
 
-    print(f"\n✓ CRUD endpoint '{endpoint_name}' created successfully!")
+    print(f"\n✓ Endpoint '{endpoint_name}' created successfully!")
     print(f"\nGenerated files:")
     print(f"  - db/entity/{endpoint_name}_entity.py")
     print(f"  - internal/repository/{endpoint_name}_repository.py")
@@ -200,11 +231,23 @@ def create_crud_endpoint():
     print(f"  - internal/controller/{endpoint_name}_controller.py")
     print(f"  - internal/routes/{endpoint_name}_route.py")
     print(f"\nEndpoints:")
-    print(f"  GET    /api/v1/{endpoint_name}")
-    print(f"  GET    /api/v1/{endpoint_name}/<id>")
-    print(f"  POST   /api/v1/{endpoint_name}")
-    print(f"  PUT    /api/v1/{endpoint_name}/<id>")
-    print(f"  DELETE /api/v1/{endpoint_name}/<id>")
+    if operations["read"]:
+        auth_marker = " 🔒" if has_auth else ""
+        print(f"  GET    /api/v1/{endpoint_name}{auth_marker}")
+        print(f"  GET    /api/v1/{endpoint_name}/<id>{auth_marker}")
+    if operations["create"]:
+        auth_marker = " 🔒" if has_auth else ""
+        print(f"  POST   /api/v1/{endpoint_name}{auth_marker}")
+    if operations["update"]:
+        auth_marker = " 🔒" if has_auth else ""
+        print(f"  PUT    /api/v1/{endpoint_name}/<id>{auth_marker}")
+    if operations["delete"]:
+        auth_marker = " 🔒" if has_auth else ""
+        print(f"  DELETE /api/v1/{endpoint_name}/<id>{auth_marker}")
+    
+    if has_auth:
+        print(f"\n🔒 All endpoints require JWT authentication")
+    
     print(f"\nNext steps:")
-    print(f"  sorm db push   # Apply database changes")
-    print(f"  sorm db seed   # Run seeders (optional)")
+    print(f"  python manage.py makemigrations")
+    print(f"  python manage.py migrate")

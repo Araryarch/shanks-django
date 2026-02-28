@@ -88,30 +88,30 @@ PROTECT = models.PROTECT
 
 
 # User helper class with Prisma-like methods (lazy import)
-class UserManager:
-    """User manager with Prisma-like syntax"""
+class UserProxy:
+    """User proxy with Prisma-like syntax and Django User access"""
 
-    @classmethod
-    def _get_user_model(cls):
-        """Lazy import Django User"""
+    def __getattr__(self, name):
+        """Lazy import Django User and forward attribute access"""
         from django.contrib.auth.models import User as DjangoUser
-
-        return DjangoUser
+        return getattr(DjangoUser, name)
 
     @classmethod
     def find_many(cls, **filters):
         """Find many users"""
-        return cls._get_user_model().objects.filter(**filters)
+        from django.contrib.auth.models import User as DjangoUser
+        return DjangoUser.objects.filter(**filters)
 
     @classmethod
     def find_first(cls, **filters):
         """Find first user"""
-        return cls._get_user_model().objects.filter(**filters).first()
+        from django.contrib.auth.models import User as DjangoUser
+        return DjangoUser.objects.filter(**filters).first()
 
     @classmethod
     def find_unique(cls, **filters):
         """Find unique user"""
-        DjangoUser = cls._get_user_model()
+        from django.contrib.auth.models import User as DjangoUser
         try:
             return DjangoUser.objects.get(**filters)
         except DjangoUser.DoesNotExist:
@@ -120,21 +120,22 @@ class UserManager:
     @classmethod
     def create(cls, username, email, password, **kwargs):
         """Create user"""
-        return cls._get_user_model().objects.create_user(
+        from django.contrib.auth.models import User as DjangoUser
+        return DjangoUser.objects.create_user(
             username=username, email=email, password=password, **kwargs
         )
 
     @classmethod
     def count(cls, **filters):
         """Count users"""
-        DjangoUser = cls._get_user_model()
+        from django.contrib.auth.models import User as DjangoUser
         if filters:
             return DjangoUser.objects.filter(**filters).count()
         return DjangoUser.objects.count()
 
 
-# Export User as the manager
-User = UserManager
+# Export User as the proxy instance
+User = UserProxy()
 
 
 def authenticate(username: str, password: str):

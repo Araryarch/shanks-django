@@ -270,7 +270,9 @@ class App:
         """Decorator for GET routes"""
 
         def decorator(handler):
-            full_path = f"{self.prefix}/{route}".strip("/")
+            # Clean up route to avoid double slashes
+            route_clean = route.lstrip("/")
+            full_path = f"{self.prefix}/{route_clean}".strip("/")
             self.routes.append(
                 {
                     "path": full_path,
@@ -286,7 +288,9 @@ class App:
         """Decorator for POST routes"""
 
         def decorator(handler):
-            full_path = f"{self.prefix}/{route}".strip("/")
+            # Clean up route to avoid double slashes
+            route_clean = route.lstrip("/")
+            full_path = f"{self.prefix}/{route_clean}".strip("/")
             self.routes.append(
                 {
                     "path": full_path,
@@ -302,7 +306,9 @@ class App:
         """Decorator for PUT routes"""
 
         def decorator(handler):
-            full_path = f"{self.prefix}/{route}".strip("/")
+            # Clean up route to avoid double slashes
+            route_clean = route.lstrip("/")
+            full_path = f"{self.prefix}/{route_clean}".strip("/")
             self.routes.append(
                 {
                     "path": full_path,
@@ -318,7 +324,9 @@ class App:
         """Decorator for DELETE routes"""
 
         def decorator(handler):
-            full_path = f"{self.prefix}/{route}".strip("/")
+            # Clean up route to avoid double slashes
+            route_clean = route.lstrip("/")
+            full_path = f"{self.prefix}/{route_clean}".strip("/")
             self.routes.append(
                 {
                     "path": full_path,
@@ -334,7 +342,9 @@ class App:
         """Decorator for PATCH routes"""
 
         def decorator(handler):
-            full_path = f"{self.prefix}/{route}".strip("/")
+            # Clean up route to avoid double slashes
+            route_clean = route.lstrip("/")
+            full_path = f"{self.prefix}/{route_clean}".strip("/")
             self.routes.append(
                 {
                     "path": full_path,
