@@ -333,9 +333,11 @@ Auto-detection rules:
 - Lainnya → treated as `string`
 - Bisa tetap specify type explicitly: `<int:id>`, `<slug:slug>`, `<uuid:uuid>`
 
-### Route Prefixing
+### Route Prefixing & Grouping
 
-Organize routes dengan prefix untuk grouping:
+Shanks supports two styles for organizing routes - pilih yang sesuai preferensi:
+
+#### Style 1: Direct Prefix (Recommended for generated code)
 
 ```python
 from shanks import App
@@ -361,12 +363,45 @@ def create_post(req):
 # POST /api/v1/posts
 ```
 
+#### Style 2: Group Method (Gin-style)
+
+```python
+from shanks import App
+
+app = App()
+
+# Create route group
+auth = app.group('api/v1/auth')
+
+@auth.post('login')
+def login(req):
+    return {'token': '...'}
+
+@auth.post('register')
+def register(req):
+    return {'user': {...}}
+
+@auth.get('me')
+def me(req):
+    return {'user': req.user}
+
+# Include group to main app
+app.include(auth)
+
+# Results in:
+# POST /api/v1/auth/login
+# POST /api/v1/auth/register
+# GET  /api/v1/auth/me
+```
+
+Both styles work identically - use whichever you prefer!
+
 #### With Middleware
 
 ```python
 from internal.middleware.auth_middleware import jwt_auth_middleware
 
-# Protected routes with auth middleware
+# Style 1: Direct prefix
 router = App(prefix='/api/v1/admin')
 router.use(jwt_auth_middleware)
 
@@ -375,45 +410,48 @@ def get_users(req):
     user = req.user  # Authenticated user from middleware
     return {'users': []}
 
-@router.get('/settings')
-def get_settings(req):
-    return {'settings': {}}
+# Style 2: Group with middleware
+app = App()
+admin = app.group('api/v1/admin', jwt_auth_middleware)
+
+@admin.get('users')
+def get_users(req):
+    user = req.user
+    return {'users': []}
+
+app.include(admin)
 ```
 
 #### Multiple Routers
 
 ```python
-# Auth routes
+# Style 1: Direct prefix (used by shanks generate)
 auth_router = App(prefix='/api/v1/auth')
-
-@auth_router.post('/login')
-def login(req):
-    return {'token': '...'}
-
-@auth_router.post('/register')
-def register(req):
-    return {'user': {...}}
-
-# User routes
 user_router = App(prefix='/api/v1/users')
-
-@user_router.get('/')
-def list_users(req):
-    return {'users': []}
-
-@user_router.get('/<id>')
-def get_user(req, id):
-    return {'user': {...}}
-
-# Post routes
 post_router = App(prefix='/api/v1/posts')
 
-@post_router.get('/')
-def list_posts(req):
-    return {'posts': []}
-
-# Register all routers in internal/routes/__init__.py
+# Register in internal/routes/__init__.py
 urlpatterns = [*auth_router, *user_router, *post_router]
+
+# Style 2: Group method
+app = App()
+
+auth = app.group('api/v1/auth')
+users = app.group('api/v1/users')
+posts = app.group('api/v1/posts')
+
+# Define routes...
+@auth.post('login')
+def login(req): ...
+
+@users.get('')
+def list_users(req): ...
+
+@posts.get('')
+def list_posts(req): ...
+
+# Include all
+app.include(auth, users, posts)
 ```
 
 ### Built-in Caching (Enabled by Default!)
