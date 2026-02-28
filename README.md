@@ -333,89 +333,88 @@ Auto-detection rules:
 - Lainnya → treated as `string`
 - Bisa tetap specify type explicitly: `<int:id>`, `<slug:slug>`, `<uuid:uuid>`
 
-### Route Grouping (Gin-style)
+### Route Prefixing
 
-Organize routes dengan grouping seperti Gin di Go:
+Organize routes dengan prefix untuk grouping:
 
 ```python
 from shanks import App
 
-app = App()
+# Create router with prefix
+router = App(prefix='/api/v1/posts')
 
-# Create route group
-auth = app.group('api/v1/auth')
+@router.get('/')
+def list_posts(req):
+    return {'posts': []}
 
-@auth.post('login')
-def login(req):
-    return {'message': 'Login'}
+@router.get('/<id>')
+def get_post(req, id):
+    return {'post': {}}
 
-@auth.post('register')
-def register(req):
-    return {'message': 'Register'}
+@router.post('/')
+def create_post(req):
+    return {'created': True}
 
-@auth.get('me')
-def me(req):
-    return {'user': req.user}
-
-# Include group to main app
-app.include(auth)
-
-# urlpatterns auto-generated! ✨
+# Results in:
+# GET  /api/v1/posts
+# GET  /api/v1/posts/<id>
+# POST /api/v1/posts
 ```
-
-Hasil:
-- POST `/api/v1/auth/login`
-- POST `/api/v1/auth/register`
-- GET `/api/v1/auth/me`
 
 #### With Middleware
 
 ```python
-# Auth middleware
-def auth_middleware(req, res, next):
-    if not req.headers.get('Authorization'):
-        return Response().status_code(401).json({'error': 'Unauthorized'})
-    next()
+from internal.middleware.auth_middleware import jwt_auth_middleware
 
-# Protected group with middleware
-admin = app.group('api/v1/admin', auth_middleware)
+# Protected routes with auth middleware
+router = App(prefix='/api/v1/admin')
+router.use(jwt_auth_middleware)
 
-@admin.get('users')
+@router.get('/users')
 def get_users(req):
+    user = req.user  # Authenticated user from middleware
     return {'users': []}
 
-@admin.get('settings')
+@router.get('/settings')
 def get_settings(req):
     return {'settings': {}}
-
-app.include(admin)
 ```
 
-#### Multiple Groups
+#### Multiple Routers
 
 ```python
 # Auth routes
-auth = app.group('api/v1/auth')
-@auth.post('login')
-def login(req): ...
+auth_router = App(prefix='/api/v1/auth')
+
+@auth_router.post('/login')
+def login(req):
+    return {'token': '...'}
+
+@auth_router.post('/register')
+def register(req):
+    return {'user': {...}}
 
 # User routes
-users = app.group('api/v1/users')
-@users.get('')
-def list_users(req): ...
-@users.get('<user_id>')
-def get_user(req, user_id): ...
+user_router = App(prefix='/api/v1/users')
+
+@user_router.get('/')
+def list_users(req):
+    return {'users': []}
+
+@user_router.get('/<id>')
+def get_user(req, id):
+    return {'user': {...}}
 
 # Post routes
-posts = app.group('api/v1/posts')
-@posts.get('')
-def list_posts(req): ...
+post_router = App(prefix='/api/v1/posts')
 
-# Include all
-app.include(auth, users, posts)
+@post_router.get('/')
+def list_posts(req):
+    return {'posts': []}
+
+# Register all routers in internal/routes/__init__.py
+urlpatterns = [*auth_router, *user_router, *post_router]
 ```
-
-Lihat [ROUTE_GROUPING_EXAMPLE.md](ROUTE_GROUPING_EXAMPLE.md) untuk contoh lengkap!
 
 ### Built-in Caching (Enabled by Default!)
 
