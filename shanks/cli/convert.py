@@ -352,13 +352,23 @@ def generate_django():
 
     print(f"[3/4] Converting Shanks code to Django...")
 
-    # First, extract URL patterns from all view files BEFORE conversion
+    # First, extract URL patterns from all route files BEFORE conversion
+    routes_dir = django_dir / "internal" / "routes"
     views_dir = django_dir / "internal" / "views"
     url_patterns_map = {}
 
+    # Extract from routes (API endpoints)
+    if routes_dir.exists():
+        for route_file in routes_dir.glob("*_route.py"):
+            module_name = route_file.stem
+            url_patterns_map[module_name] = _extract_url_patterns(
+                route_file, module_name
+            )
+
+    # Extract from views (template rendering)
     if views_dir.exists():
         for view_file in views_dir.glob("*_view.py"):
-            module_name = view_file.stem  # filename without .py
+            module_name = view_file.stem
             url_patterns_map[module_name] = _extract_url_patterns(
                 view_file, module_name
             )
@@ -374,44 +384,60 @@ def generate_django():
         for controller_file in controllers_dir.glob("*_controller.py"):
             _convert_controller(controller_file)
 
-    # Now convert individual view files
+    # Convert route files
+    if routes_dir.exists():
+        for route_file in routes_dir.glob("*_route.py"):
+            _convert_route_file(route_file)
+
+    # Convert view files
     if views_dir.exists():
         for view_file in views_dir.glob("*_view.py"):
             _convert_route_file(view_file)
 
-    # Convert views __init__.py to Django URLs
-    views_init = django_dir / "internal" / "views" / "__init__.py"
-    if views_init.exists():
-        content = views_init.read_text(encoding="utf-8")
+    # Convert routes __init__.py to Django URLs
+    routes_init = django_dir / "internal" / "routes" / "__init__.py"
+    if routes_init.exists():
+        content = routes_init.read_text(encoding="utf-8")
 
         # Add Django imports
         new_content = '''"""Django URL Configuration"""
 from django.urls import path, re_path
 
-# Import all view handlers
+# Import all route handlers
 '''
 
         # Extract router imports and convert to module imports
-        view_modules = []
+        route_modules = []
         lines = content.split("\n")
         for line in lines:
-            if "from ." in line and "_view import router" in line:
+            if "from ." in line and "_route import router" in line:
                 # Extract module name
                 module = line.split("from .")[1].split(" import")[0]
-                view_modules.append(module)
+                route_modules.append(module)
                 new_content += f"from . import {module}\n"
+
+        # Also check for view imports if views directory exists
+        if views_dir.exists():
+            views_init = django_dir / "internal" / "views" / "__init__.py"
+            if views_init.exists():
+                views_content = views_init.read_text(encoding="utf-8")
+                for line in views_content.split("\n"):
+                    if "from ." in line and "_view import router" in line:
+                        module = line.split("from .")[1].split(" import")[0]
+                        route_modules.append(module)
+                        new_content += f"from internal.views import {module}\n"
 
         new_content += "\n# Django URL patterns\nurlpatterns = [\n"
 
         # Add URL patterns from the map we created earlier
-        for module in view_modules:
+        for module in route_modules:
             if module in url_patterns_map:
                 for pattern in url_patterns_map[module]:
                     new_content += f"    {pattern}\n"
 
         new_content += "]\n"
 
-        views_init.write_text(new_content, encoding="utf-8")
+        routes_init.write_text(new_content, encoding="utf-8")
 
     # Convert settings.py to native Django
     settings_file = django_dir / project_name / "settings.py"

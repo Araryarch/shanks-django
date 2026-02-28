@@ -22,7 +22,7 @@ from .cache import (
 )
 from .template import render, render_string, render_html
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Ararya"
 __email__ = "araryaarch@gmail.com"
 
@@ -83,6 +83,21 @@ def __getattr__(name):
         from . import config
 
         return getattr(config, name)
+
+    # Django exceptions
+    if name == "IntegrityError":
+        from django.db import IntegrityError
+        return IntegrityError
+
+    # Django settings
+    if name == "settings":
+        from django.conf import settings
+        return settings
+
+    # Django mail
+    if name == "send_mail":
+        from django.core.mail import send_mail
+        return send_mail
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
@@ -158,6 +173,10 @@ __all__ = [
     "get_middleware",
     "get_templates",
     "get_password_validators",
+    # Django
+    "IntegrityError",
+    "settings",
+    "send_mail",
 ]
 
 # CLI is available via 'shanks' command after installation

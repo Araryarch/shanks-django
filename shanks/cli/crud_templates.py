@@ -237,28 +237,26 @@ from internal.controller import {endpoint_name}_controller
 
 router = App()
 
+# Group all {endpoint_name} routes under /api/v1/{endpoint_plural}
+with router.group('/api/v1/{endpoint_plural}'):
+    
+    @router.get('/')
+    def list_{endpoint_plural}_route(req):
+        return {endpoint_name}_controller.list_{endpoint_plural}(req)
 
-@router.get('/api/{endpoint_plural}')
-def list_{endpoint_plural}_route(req):
-    return {endpoint_name}_controller.list_{endpoint_plural}(req)
+    @router.get('/<id>')
+    def get_{endpoint_name}_route(req, id):
+        return {endpoint_name}_controller.get_by_id(req, id)
 
+    @router.post('/')
+    def create_{endpoint_name}_route(req):
+        return {endpoint_name}_controller.create(req)
 
-@router.get('/api/{endpoint_plural}/<id>')
-def get_{endpoint_name}_route(req, id):
-    return {endpoint_name}_controller.get_by_id(req, id)
+    @router.put('/<id>')
+    def update_{endpoint_name}_route(req, id):
+        return {endpoint_name}_controller.update(req, id)
 
-
-@router.post('/api/{endpoint_plural}')
-def create_{endpoint_name}_route(req):
-    return {endpoint_name}_controller.create(req)
-
-
-@router.put('/api/{endpoint_plural}/<id>')
-def update_{endpoint_name}_route(req, id):
-    return {endpoint_name}_controller.update(req, id)
-
-
-@router.delete('/api/{endpoint_plural}/<id>')
-def delete_{endpoint_name}_route(req, id):
-    return {endpoint_name}_controller.delete(req, id)
+    @router.delete('/<id>')
+    def delete_{endpoint_name}_route(req, id):
+        return {endpoint_name}_controller.delete(req, id)
 '''

@@ -55,7 +55,7 @@ def create_project():
     internal_dir.mkdir(exist_ok=True)
     (internal_dir / "__init__.py").write_text("", encoding="utf-8")
 
-    for subdir in ["controller", "repository", "service", "middleware", "views"]:
+    for subdir in ["controller", "repository", "service", "middleware", "routes"]:
         dir_path = internal_dir / subdir
         dir_path.mkdir(exist_ok=True)
         (dir_path / "__init__.py").write_text("", encoding="utf-8")
@@ -118,20 +118,43 @@ else:
     )
 
     # Create base DTO
-    print("[2/5] Creating base DTO and views...")
+    print("[2/5] Creating base DTO and routes...")
     (project_dir / "dto" / "base_dto.py").write_text(
         get_base_dto_template(), encoding="utf-8"
     )
 
-    # Create health view file
-    (internal_dir / "views" / "health_view.py").write_text(
-        get_health_view_template(project_name), encoding="utf-8"
+    # Create health route file
+    (internal_dir / "routes" / "health_route.py").write_text(
+        get_health_route_template(project_name), encoding="utf-8"
     )
 
-    # Create views __init__.py (routes)
-    (internal_dir / "views" / "__init__.py").write_text(
-        get_views_init_template(), encoding="utf-8"
+    # Create routes __init__.py
+    (internal_dir / "routes" / "__init__.py").write_text(
+        get_routes_init_template(), encoding="utf-8"
     )
+
+    # Create main urls.py that combines routes and views
+    main_urls = '''"""Main URL Configuration"""
+from django.urls import path, include
+
+urlpatterns = [
+    path('', include('internal.views')),
+    path('', include('internal.routes')),
+]
+'''
+    (internal_dir / "urls.py").write_text(main_urls, encoding="utf-8")
+
+    # Create views directory (optional, for template rendering)
+    views_dir = project_dir / "internal" / "views"
+    views_dir.mkdir(exist_ok=True)
+
+    # Create home view (example of template rendering)
+    (views_dir / "home_view.py").write_text(
+        get_home_view_template(project_name), encoding="utf-8"
+    )
+
+    # Create views __init__.py
+    (views_dir / "__init__.py").write_text(get_views_init_template(), encoding="utf-8")
 
     # Create middleware
     (internal_dir / "middleware" / "logger.py").write_text(

@@ -4,6 +4,7 @@ import sys
 
 from .commands import create_project, run_server
 from .crud import create_crud_endpoint
+from .auth import create_auth_endpoint
 from .convert import generate_django, kamusari
 
 
@@ -15,6 +16,7 @@ def main():
         print("  shanks new <project_name>        Create new project")
         print("  shanks run                       Start development server")
         print("  shanks create <name> --crud      Generate CRUD endpoint")
+        print("  shanks create auth --simple      Generate auth endpoints")
         print("  shanks generate django           Convert to pure Django (safe)")
         print(
             "  shanks kamusari                  Convert to Django in-place (destructive)"
@@ -28,7 +30,11 @@ def main():
     elif command == "run":
         run_server()
     elif command == "create":
-        create_crud_endpoint()
+        # Check if it's auth or CRUD
+        if len(sys.argv) >= 3 and sys.argv[2] == "auth":
+            create_auth_endpoint()
+        else:
+            create_crud_endpoint()
     elif command == "generate":
         if len(sys.argv) < 3 or sys.argv[2] != "django":
             print("Usage: shanks generate django")
@@ -42,6 +48,7 @@ def main():
         print("  new             - Create new project")
         print("  run             - Start development server")
         print("  create          - Generate CRUD endpoint")
+        print("  create auth     - Generate auth endpoints")
         print("  generate django - Convert to pure Django (safe)")
         print("  kamusari        - Convert to Django in-place (destructive)")
         sys.exit(1)

@@ -2,6 +2,14 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.3.1] - 2026-02-27
+
+### Fixed
+- **Build Compatibility**: Fixed `pyproject.toml` license format for Python 3.8 compatibility
+  - Changed from `license = "MIT"` to `license = {text = "MIT"}`
+  - Resolves setuptools validation error in older Python versions
+  - Ensures CI/CD passes on all supported Python versions (3.8-3.12)
+
 ## [0.3.0] - 2026-02-27
 
 ### Added

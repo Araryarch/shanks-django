@@ -64,22 +64,16 @@ class BaseDTO:
 '''
 
 
-def get_health_view_template(project_name):
-    """Health check view template"""
-    return f'''"""Health Check Views"""
-from shanks import App, render
+def get_health_route_template(project_name):
+    """Health check route template"""
+    return f'''"""Health Check Routes"""
+from shanks import App
 from dto.base_dto import BaseDTO
 
 router = App()
 
 
-@router.get("/")
-def home(req):
-    """Home page"""
-    return render(req, "index.html", {{"title": "{project_name}"}})
-
-
-@router.get("/api/health")
+@router.get("/api/v1/health")
 def health(req):
     """Health check endpoint"""
     return BaseDTO.success(
@@ -89,15 +83,42 @@ def health(req):
 '''
 
 
-def get_views_init_template():
-    """Views __init__.py template"""
-    return '''"""API Views"""
+def get_routes_init_template():
+    """Routes __init__.py template"""
+    return '''"""API Routes"""
 
 # Import all routers
-from .health_view import router as health_router
+from .health_route import router as health_router
 
 # Export urlpatterns for Django
 urlpatterns = [*health_router]
+'''
+
+
+def get_home_view_template(project_name):
+    """Home view template (optional, for template rendering)"""
+    return f'''"""Home View"""
+from shanks import App, render
+
+router = App()
+
+
+@router.get("/")
+def home(req):
+    """Home page"""
+    return render(req, "index.html", {{"title": "{project_name}"}})
+'''
+
+
+def get_views_init_template():
+    """Views __init__.py template"""
+    return '''"""Template Views"""
+
+# Import all view routers
+from .home_view import router as home_router
+
+# Export urlpatterns for Django
+urlpatterns = [*home_router]
 '''
 
 
@@ -136,7 +157,7 @@ ALLOWED_HOSTS = get_allowed_hosts()
 
 INSTALLED_APPS = get_installed_apps(["internal", "db", "dto"])
 MIDDLEWARE = get_middleware()
-ROOT_URLCONF = "internal.views"
+ROOT_URLCONF = "internal.urls"
 TEMPLATES = get_templates(BASE_DIR)
 WSGI_APPLICATION = "{project_name}.wsgi.application"
 DATABASES = get_database(BASE_DIR)
@@ -233,7 +254,8 @@ sorm db pull              # Pull database schema
 ```
 {project_name}/
 ├── internal/
-│   ├── views/            # Views & routes
+│   ├── routes/           # API routes
+│   ├── views/            # Template views (optional)
 │   ├── controller/       # Request handlers
 │   ├── service/          # Business logic
 │   ├── repository/       # Data access
@@ -268,7 +290,10 @@ def get_index_template(project_name):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{{{ title }}}} - {project_name}</title>
+    <title>{{{{ title|default:"{project_name}" }}}} - Shanks Django</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {{
             margin: 0;
@@ -276,8 +301,9 @@ def get_index_template(project_name):
             box-sizing: border-box;
         }}
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0a;
+            color: #ffffff;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -285,96 +311,200 @@ def get_index_template(project_name):
             padding: 20px;
         }}
         .container {{
-            background: white;
-            border-radius: 20px;
-            padding: 60px 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            text-align: center;
+            max-width: 900px;
+            width: 100%;
         }}
-        h1 {{
-            color: #333;
-            font-size: 3em;
-            margin-bottom: 20px;
+        .header {{
+            margin-bottom: 60px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
         }}
-        p {{
+        .header-image {{
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+        }}
+        .header-divider {{
+            width: 2px;
+            height: 80px;
+            background: #dc2626;
+        }}
+        .header-content {{
+            flex: 1;
+        }}
+        .logo {{
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }}
+        .tagline {{
+            font-size: 16px;
             color: #666;
-            font-size: 1.2em;
-            line-height: 1.6;
-            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }}
+        .code-block {{
+            background: #000000;
+            border: 1px solid #1a1a1a;
+            padding: 30px;
+            margin: 40px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }}
+        .code-block pre {{
+            margin: 0;
+            padding: 0;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+        }}
+        .code-block .comment {{ color: #666; }}
+        .code-block .keyword {{ color: #dc2626; }}
+        .code-block .function {{ color: #ffffff; }}
+        .code-block .string {{ color: #999; }}
+        .code-block .decorator {{ color: #dc2626; }}
         .features {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            margin: 60px 0;
         }}
         .feature {{
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            transition: transform 0.3s;
+            background: #0a0a0a;
+            padding: 30px;
+            transition: background 0.3s;
         }}
         .feature:hover {{
-            transform: translateY(-5px);
-        }}
-        .feature-icon {{
-            font-size: 2em;
-            margin-bottom: 10px;
+            background: #000000;
         }}
         .feature-title {{
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }}
         .feature-desc {{
-            font-size: 0.9em;
-            color: #888;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
         }}
-        .cta {{
-            margin-top: 40px;
+        .links {{
+            display: flex;
+            gap: 20px;
+            margin-top: 60px;
         }}
         .btn {{
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 16px 32px;
             text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            display: inline-block;
+            border: 1px solid;
         }}
-        .btn:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        .btn-primary {{
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }}
+        .btn-primary:hover {{
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }}
+        .btn-secondary {{
+            background: transparent;
+            color: #ffffff;
+            border-color: #333;
+        }}
+        .btn-secondary:hover {{
+            border-color: #dc2626;
+            color: #dc2626;
+        }}
+        .footer {{
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 1px solid #1a1a1a;
+            font-size: 11px;
+            color: #333;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }}
+        @media (max-width: 768px) {{
+            .features {{
+                grid-template-columns: 1fr;
+            }}
+            .logo {{
+                font-size: 48px;
+            }}
+            .links {{
+                flex-direction: column;
+            }}
+            .btn {{
+                text-align: center;
+            }}
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{{{ title|default:"{project_name}" }}}}</h1>
-        <p>{{{{ message|default:"Welcome to your Shanks Django application!" }}}}</p>
-        
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-title">Fast</div>
-                <div class="feature-desc">Express.js-like routing</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-title">Simple</div>
-                <div class="feature-desc">Clean & intuitive API</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🚀</div>
-                <div class="feature-title">Powerful</div>
-                <div class="feature-desc">Built on Django</div>
+        <div class="header">
+            <img src="https://github.com/user-attachments/assets/70a7c689-f475-41b4-862b-6b9371d127e9" alt="Shanks" class="header-image">
+            <div class="header-divider"></div>
+            <div class="header-content">
+                <div class="logo">{{{{ title|upper|default:"SHANKS" }}}}</div>
+                <div class="tagline">Express.js for Django</div>
             </div>
         </div>
-        
-        <div class="cta">
-            <a href="/api/health" class="btn">Check API Health</a>
+
+        <div class="code-block">
+            <pre><span class="keyword">from</span> shanks <span class="keyword">import</span> App
+
+app = <span class="function">App</span>()
+
+<span class="decorator">@app.get</span>(<span class="string">'api/hello'</span>)
+<span class="keyword">def</span> <span class="function">hello</span>(req):
+    <span class="keyword">return</span> {{<span class="string">'message'</span>: <span class="string">'Hello World'</span>}}
+
+<span class="comment"># urlpatterns auto-generated! ✨</span></pre>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-title">Easy Syntax</div>
+                <div class="feature-desc">Familiar decorator-based routing inspired by Express.js</div>
+            </div>
+            <div class="feature">
+                <div class="feature-title">Django ORM</div>
+                <div class="feature-desc">Modern database queries with find_many(), create(), update()</div>
+            </div>
+            <div class="feature">
+                <div class="feature-title">Django Power</div>
+                <div class="feature-desc">Full Django ecosystem with simplified syntax</div>
+            </div>
+            <div class="feature">
+                <div class="feature-title">Auto Swagger</div>
+                <div class="feature-desc">Built-in API documentation and testing interface</div>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="/api/health" class="btn btn-primary">API Health</a>
+            <a href="https://github.com/Araryarch/shanks-django" class="btn btn-secondary" target="_blank">GitHub</a>
+        </div>
+
+        <div class="footer">
+            Shanks Django Framework — Built by Ararya
         </div>
     </div>
 </body>
