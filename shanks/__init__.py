@@ -22,7 +22,7 @@ from .cache import (
 )
 from .template import render, render_string, render_html
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 __author__ = "Ararya"
 __email__ = "araryaarch@gmail.com"
 

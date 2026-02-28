@@ -2,6 +2,88 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.4.0] - 2026-02-28
+
+### Added
+- **Flexible CRUD Generation**: Individual operation flags for granular control
+  - `-c` flag for Create operation only
+  - `-r` flag for Read operations (list + get by ID)
+  - `-u` flag for Update operation only
+  - `-d` flag for Delete operation only
+  - `--crud` flag for full CRUD (same as default)
+  - Default behavior (no flags) generates full CRUD
+  - Mix and match flags: `shanks create orders -c -r` (only Create & Read)
+
+- **JWT Authentication Flag**: `--auth` flag for protected endpoints
+  - `shanks create posts --crud --auth` - Full CRUD with JWT required
+  - `shanks create comments -c --auth` - Only Create with JWT required
+  - Works with any combination of operation flags
+  - Auto-generates JWT middleware in `internal/middleware/auth_middleware.py`
+  - Middleware applied at route level with `router.use(jwt_auth_middleware)`
+  - Controller checks `hasattr(req, 'user_id')` for authentication
+
+- **Dual Routing Styles**: Support both prefix and group methods
+  - Style 1: `App(prefix='/api/v1/posts')` - Direct prefix (used by generator)
+  - Style 2: `app.group('api/v1/posts')` - Gin-style grouping
+  - Both styles work identically, choose based on preference
+  - `app.include()` method to combine multiple routers
+
+### Changed
+- **Project Structure**: Updated to layered architecture
+  - `db/entity/` - Django models
+  - `internal/repository/` - Data access layer
+  - `internal/service/` - Business logic layer
+  - `internal/controller/` - Request handlers
+  - `internal/routes/` - API routes
+  - Better separation of concerns
+
+- **CRUD Generation**: Now generates 5 files instead of 2
+  - Entity (model) with proper Django fields
+  - Repository for database operations
+  - Service for business logic
+  - Controller for request/response handling
+  - Routes with proper HTTP methods
+
+- **Response Format**: Standardized with BaseDTO
+  - All responses use `{"status": 200, "message": "...", "data": {...}, "pagination": {...}}`
+  - Consistent error handling across all endpoints
+  - Proper HTTP status codes
+
+### Improved
+- **Authentication**: JWT middleware properly sets `req.user` and `req.user_id`
+  - Middleware validates token and attaches user to request
+  - Controllers can access authenticated user via `req.user`
+  - Clean separation between protected and public endpoints
+
+- **Documentation**: Comprehensive README updates
+  - Examples for all flag combinations
+  - Both routing styles documented
+  - Real-world use cases (blog, e-commerce, reviews, orders)
+  - Clear explanations of when to use each flag
+
+### Examples
+
+```bash
+# Default - Full CRUD
+shanks create products
+
+# Individual operations
+shanks create orders -c -r          # Only Create & Read
+shanks create reports -d            # Only Delete
+
+# With authentication
+shanks create reviews --crud --auth # Full CRUD, all protected
+shanks create comments -c --auth    # Only Create with auth
+shanks create posts -c -r --auth    # Create & Read with auth
+```
+
+### Technical Details
+- Modified `shanks/cli/crud.py` to parse operation flags
+- Updated `shanks/cli/crud_templates.py` to conditionally generate operations
+- Fixed auto-registration logic in routes `__init__.py` to avoid duplicates
+- Controller authentication check uses `hasattr(req, 'user_id')` pattern
+- Middleware sets both `req.user` and `req.user_id` for flexibility
+
 ## [0.3.1] - 2026-02-27
 
 ### Fixed
