@@ -3,16 +3,15 @@
 
 def get_entity_template(model_name, endpoint_name):
     """Entity (Django model) template"""
-    return f"""from django.db import models
-from django.contrib.auth.models import User
+    return f"""from shanks import Model, CharField, TextField, ForeignKey, DateTimeField, CASCADE
 
 
-class {model_name}(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='{endpoint_name}_created')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class {model_name}(Model):
+    title = CharField(max_length=200)
+    description = TextField(blank=True)
+    created_by = ForeignKey('auth.User', on_delete=CASCADE, related_name='{endpoint_name}_created')
+    created_at = DateTimeField(auto_now_add=True)
+    updated_at = DateTimeField(auto_now=True)
 
     class Meta:
         db_table = '{endpoint_name}'
@@ -238,25 +237,25 @@ from internal.controller import {endpoint_name}_controller
 router = App()
 
 # Group all {endpoint_name} routes under /api/v1/{endpoint_plural}
-with router.group('/api/v1/{endpoint_plural}'):
-    
-    @router.get('/')
-    def list_{endpoint_plural}_route(req):
-        return {endpoint_name}_controller.list_{endpoint_plural}(req)
+{endpoint_name}_routes = router.group('/api/v1/{endpoint_plural}')
 
-    @router.get('/<id>')
-    def get_{endpoint_name}_route(req, id):
-        return {endpoint_name}_controller.get_by_id(req, id)
+@{endpoint_name}_routes.get('/')
+def list_{endpoint_plural}_route(req):
+    return {endpoint_name}_controller.list_{endpoint_plural}(req)
 
-    @router.post('/')
-    def create_{endpoint_name}_route(req):
-        return {endpoint_name}_controller.create(req)
+@{endpoint_name}_routes.get('/<id>')
+def get_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.get_by_id(req, id)
 
-    @router.put('/<id>')
-    def update_{endpoint_name}_route(req, id):
-        return {endpoint_name}_controller.update(req, id)
+@{endpoint_name}_routes.post('/')
+def create_{endpoint_name}_route(req):
+    return {endpoint_name}_controller.create(req)
 
-    @router.delete('/<id>')
-    def delete_{endpoint_name}_route(req, id):
-        return {endpoint_name}_controller.delete(req, id)
+@{endpoint_name}_routes.put('/<id>')
+def update_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.update(req, id)
+
+@{endpoint_name}_routes.delete('/<id>')
+def delete_{endpoint_name}_route(req, id):
+    return {endpoint_name}_controller.delete(req, id)
 '''

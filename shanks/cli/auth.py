@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from .auth_templates import get_simple_auth_controller_template, get_simple_auth_route_template
 from .auth_complete_templates import get_complete_auth_controller_template, get_complete_auth_route_template
+from .auth_middleware_template import get_auth_middleware_template
 
 
 def create_auth_endpoint():
@@ -30,10 +31,10 @@ def create_auth_endpoint():
 def create_simple_auth():
     """Generate simple authentication endpoints"""
     print("\nGenerating simple authentication endpoints...")
-    print("Endpoints: /api/auth/login, /api/auth/register, /api/auth/logout\n")
+    print("Endpoints: /api/v1/auth/*\n")
 
-    # [1/3] Create auth controller
-    print("[1/3] Creating auth controller...")
+    # [1/4] Create auth controller
+    print("[1/4] Creating auth controller...")
     controller_dir = Path("internal/controller")
     controller_dir.mkdir(parents=True, exist_ok=True)
     if not (controller_dir / "__init__.py").exists():
@@ -50,8 +51,26 @@ def create_simple_auth():
         controller_init_content += f"\n{import_line}\n"
         controller_init_file.write_text(controller_init_content, encoding="utf-8")
 
-    # [2/3] Create auth routes
-    print("[2/3] Creating auth routes...")
+    # [2/4] Create auth middleware
+    print("[2/4] Creating auth middleware...")
+    middleware_dir = Path("internal/middleware")
+    middleware_dir.mkdir(parents=True, exist_ok=True)
+    if not (middleware_dir / "__init__.py").exists():
+        (middleware_dir / "__init__.py").write_text("", encoding="utf-8")
+
+    middleware_file = middleware_dir / "auth_middleware.py"
+    middleware_file.write_text(get_auth_middleware_template(), encoding="utf-8")
+
+    # Update middleware __init__.py
+    middleware_init_file = middleware_dir / "__init__.py"
+    middleware_init_content = middleware_init_file.read_text(encoding="utf-8")
+    import_line = "from . import auth_middleware"
+    if import_line not in middleware_init_content:
+        middleware_init_content += f"\n{import_line}\n"
+        middleware_init_file.write_text(middleware_init_content, encoding="utf-8")
+
+    # [3/4] Create auth routes
+    print("[3/4] Creating auth routes...")
     routes_dir = Path("internal/routes")
     routes_dir.mkdir(parents=True, exist_ok=True)
     if not (routes_dir / "__init__.py").exists():
@@ -60,39 +79,38 @@ def create_simple_auth():
     route_file = routes_dir / "auth_route.py"
     route_file.write_text(get_simple_auth_route_template(), encoding="utf-8")
 
-    # [3/3] Auto-register routes
-    print("[3/3] Auto-registering routes...")
+    # [4/4] Auto-register routes
+    print("[4/4] Auto-registering routes...")
     register_auth_routes()
 
     print(f"\n✓ Simple authentication endpoints created successfully!")
     print(f"\nGenerated files:")
     print(f"  - internal/controller/auth_controller.py")
+    print(f"  - internal/middleware/auth_middleware.py")
     print(f"  - internal/routes/auth_route.py")
     print(f"\nEndpoints:")
     print(f"  POST   /api/v1/auth/register  - Register new user")
     print(f"  POST   /api/v1/auth/login     - Login user")
-    print(f"  POST   /api/v1/auth/logout    - Logout user (client-side)")
+    print(f"  POST   /api/v1/auth/logout    - Logout user")
     print(f"  GET    /api/v1/auth/me        - Get current user info")
-    print(f"\nExample usage:")
-    print(f'  Register: POST /api/v1/auth/register {{"username":"user","email":"user@test.com","password":"pass123"}}')
-    print(f'  Response: {{"token": "eyJ...", "user": {{...}}}}')
-    print(f'  ')
-    print(f'  Login:    POST /api/v1/auth/login {{"username":"user","password":"pass123"}}')
-    print(f'  Response: {{"token": "eyJ...", "user": {{...}}}}')
-    print(f'  ')
-    print(f'  Me:       GET  /api/v1/auth/me')
-    print(f'  Headers:  Authorization: Bearer <token>')
-    print(f'  ')
-    print(f'  Logout:   POST /api/v1/auth/logout (remove token from client)')
+    print(f"\nMiddleware:")
+    print(f"  jwt_auth_middleware          - Protect routes (requires token)")
+    print(f"  optional_auth_middleware     - Optional auth")
+    print(f"\nUsage:")
+    print(f"  from internal.middleware.auth_middleware import jwt_auth_middleware")
+    print(f"  ")
+    print(f"  @router.get('/protected', middleware=[jwt_auth_middleware])")
+    print(f"  def protected(req):")
+    print(f"      return {{'user_id': req.user.id}}")
 
 
 def create_complete_auth():
     """Generate complete authentication with email verification"""
     print("\nGenerating complete authentication endpoints...")
-    print("Endpoints: register, login, logout, verify-email, forgot-password, reset-password\n")
+    print("Endpoints: /api/v1/auth/*\n")
 
-    # [1/3] Create complete auth controller
-    print("[1/3] Creating complete auth controller...")
+    # [1/4] Create complete auth controller
+    print("[1/4] Creating complete auth controller...")
     controller_dir = Path("internal/controller")
     controller_dir.mkdir(parents=True, exist_ok=True)
     if not (controller_dir / "__init__.py").exists():
@@ -109,8 +127,26 @@ def create_complete_auth():
         controller_init_content += f"\n{import_line}\n"
         controller_init_file.write_text(controller_init_content, encoding="utf-8")
 
-    # [2/3] Create complete auth routes
-    print("[2/3] Creating complete auth routes...")
+    # [2/4] Create auth middleware
+    print("[2/4] Creating auth middleware...")
+    middleware_dir = Path("internal/middleware")
+    middleware_dir.mkdir(parents=True, exist_ok=True)
+    if not (middleware_dir / "__init__.py").exists():
+        (middleware_dir / "__init__.py").write_text("", encoding="utf-8")
+
+    middleware_file = middleware_dir / "auth_middleware.py"
+    middleware_file.write_text(get_auth_middleware_template(), encoding="utf-8")
+
+    # Update middleware __init__.py
+    middleware_init_file = middleware_dir / "__init__.py"
+    middleware_init_content = middleware_init_file.read_text(encoding="utf-8")
+    import_line = "from . import auth_middleware"
+    if import_line not in middleware_init_content:
+        middleware_init_content += f"\n{import_line}\n"
+        middleware_init_file.write_text(middleware_init_content, encoding="utf-8")
+
+    # [3/4] Create complete auth routes
+    print("[3/4] Creating complete auth routes...")
     routes_dir = Path("internal/routes")
     routes_dir.mkdir(parents=True, exist_ok=True)
     if not (routes_dir / "__init__.py").exists():
@@ -119,18 +155,19 @@ def create_complete_auth():
     route_file = routes_dir / "auth_route.py"
     route_file.write_text(get_complete_auth_route_template(), encoding="utf-8")
 
-    # [3/3] Auto-register routes
-    print("[3/3] Auto-registering routes...")
+    # [4/4] Auto-register routes
+    print("[4/4] Auto-registering routes...")
     register_auth_routes()
 
     print(f"\n✓ Complete authentication endpoints created successfully!")
     print(f"\nGenerated files:")
     print(f"  - internal/controller/auth_controller.py")
+    print(f"  - internal/middleware/auth_middleware.py")
     print(f"  - internal/routes/auth_route.py")
     print(f"\nEndpoints:")
-    print(f"  POST   /api/v1/auth/register         - Register new user (sends verification email)")
+    print(f"  POST   /api/v1/auth/register         - Register (sends verification email)")
     print(f"  POST   /api/v1/auth/verify-email     - Verify email with code")
-    print(f"  POST   /api/v1/auth/resend-verification - Resend verification email")
+    print(f"  POST   /api/v1/auth/resend-verification - Resend verification")
     print(f"  POST   /api/v1/auth/login            - Login user")
     print(f"  POST   /api/v1/auth/logout           - Logout user")
     print(f"  POST   /api/v1/auth/forgot-password  - Request password reset")
@@ -138,14 +175,7 @@ def create_complete_auth():
     print(f"  GET    /api/v1/auth/me               - Get current user info")
     print(f"\nEmail Configuration:")
     print(f"  Add to settings.py:")
-    print(f"  EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development")
-    print(f"  # For production, use SMTP:")
-    print(f"  # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'")
-    print(f"  # EMAIL_HOST = 'smtp.gmail.com'")
-    print(f"  # EMAIL_PORT = 587")
-    print(f"  # EMAIL_USE_TLS = True")
-    print(f"  # EMAIL_HOST_USER = 'your-email@gmail.com'")
-    print(f"  # EMAIL_HOST_PASSWORD = 'your-app-password'")
+    print(f"  EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'")
 
 
 def register_auth_routes():
