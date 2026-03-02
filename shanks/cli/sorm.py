@@ -20,6 +20,7 @@ def sorm_main():
         print("  sorm db reset             Reset database (flush)")
         print("  sorm db seed              Run all seeders")
         print("  sorm createsuperuser      Create admin superuser")
+        print("  sorm createdefaultuser    Create default admin user (admin/admin123)")
         print("  sorm makemigrations       Create new migrations")
         print("  sorm migrate              Apply migrations")
         print("  sorm showmigrations       Show migration status")
@@ -131,6 +132,40 @@ def sorm_main():
         print("Create Admin Superuser\n")
         subprocess.run([sys.executable, "manage.py", "createsuperuser"], check=True)
 
+    elif command == "createdefaultuser":
+        # Create default admin user
+        print_banner()
+        print("Creating default admin user...\n")
+        
+        create_user_script = """
+from django.contrib.auth.models import User
+
+if User.objects.filter(username='admin').exists():
+    print('❌ User "admin" already exists')
+else:
+    User.objects.create_superuser(
+        username='admin',
+        email='admin@example.com',
+        password='admin123'
+    )
+    print('✓ Default admin user created successfully!')
+    print('')
+    print('Credentials:')
+    print('  Username: admin')
+    print('  Password: admin123')
+    print('')
+    print('⚠️  Change the password in production!')
+"""
+        
+        result = subprocess.run(
+            [sys.executable, "manage.py", "shell", "-c", create_user_script],
+            check=False
+        )
+        
+        if result.returncode != 0:
+            print("\n❌ Failed to create default user")
+            sys.exit(1)
+
     elif command == "makemigrations":
         # Pass through to Django
         subprocess.run(
@@ -152,11 +187,12 @@ def sorm_main():
     else:
         print(f"Unknown command: {command}")
         print("\nAvailable commands:")
-        print("  db                - Database operations (push, pull, reset, seed)")
-        print("  createsuperuser   - Create admin superuser")
-        print("  makemigrations    - Create new migrations")
-        print("  migrate           - Apply migrations")
-        print("  showmigrations    - Show migration status")
+        print("  db                  - Database operations (push, pull, reset, seed)")
+        print("  createsuperuser     - Create admin superuser")
+        print("  createdefaultuser   - Create default admin user (admin/admin123)")
+        print("  makemigrations      - Create new migrations")
+        print("  migrate             - Apply migrations")
+        print("  showmigrations      - Show migration status")
         sys.exit(1)
 
 

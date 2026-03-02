@@ -17,6 +17,7 @@ pip install shanks-django
 
 -  **Express.js-like syntax** - Familiar routing
 -  **Prisma-like ORM** - Modern database queries
+-  **Unfold Admin Panel** - Beautiful Django admin with Tailwind CSS
 -  **Flexible CRUD generation** - Generate only what you need (-c, -r, -u, -d flags)
 -  **Built-in JWT authentication** - Secure endpoints with --auth flag
 -  **Auto-caching enabled** - GET requests cached by default (10x faster!)
@@ -32,6 +33,10 @@ pip install shanks-django
 ```bash
 # Buat project baru
 shanks new myproject
+
+# Atau dengan admin panel
+shanks new myproject --admin
+
 cd myproject
 
 # Generate auth endpoints
@@ -42,12 +47,9 @@ shanks create products              # Full CRUD
 shanks create orders -c -r          # Only Create & Read
 shanks create reviews --crud --auth # Full CRUD with JWT auth
 
-# Run migrations
-sorm make
-sorm db migrate
-
-# Or use push (make + migrate in one command)
+# Setup database and create default admin
 sorm db push
+sorm createdefaultuser  # Creates admin/admin123
 
 # Start server
 shanks run
@@ -56,6 +58,7 @@ shanks run
 Visit:
 - API: http://127.0.0.1:8000/api/v1/health
 - Auth: http://127.0.0.1:8000/api/v1/auth/register
+- Admin: http://127.0.0.1:8000/admin/ (login: admin/admin123)
 - Swagger: http://127.0.0.1:8000/docs
 
 That's it! Your API now has:
@@ -63,6 +66,8 @@ That's it! Your API now has:
 - ✅ Flexible CRUD endpoints (only what you need)
 - ✅ Auto-caching enabled (10x faster GET requests)
 - ✅ Smart cache invalidation on writes
+- ✅ Modern admin panel with Unfold theme (optional)
+- ✅ Default admin user ready to use
 - ✅ Swagger documentation
 
 ## 🛠️ CLI Commands
@@ -87,6 +92,9 @@ Auto-reload seperti nodemon, langsung detect perubahan file.
 ```bash
 # Buat project baru dengan struktur Go-like
 shanks new myproject
+
+# Buat project dengan admin panel
+shanks new myproject --admin
 ```
 
 Struktur yang di-generate:
@@ -103,6 +111,12 @@ myproject/
     ├── middleware/
     └── dto/
 ```
+
+**With `--admin` flag:**
+- ✅ Auto-generates admin panel at `/admin/`
+- ✅ Includes Unfold theme with Shanks red/black/white color scheme
+- ✅ User & Group admin pre-configured
+- ✅ Ready to use after `sorm createsuperuser`
 
 ### Generate CRUD Endpoints
 
@@ -294,8 +308,11 @@ sorm db push
 # Reset database (flush all data)
 sorm db reset
 
-# Create admin superuser
+# Create admin superuser (interactive)
 sorm createsuperuser
+
+# Create default admin user (admin/admin123)
+sorm createdefaultuser
 
 # Open database shell
 sorm db shell
@@ -308,8 +325,18 @@ Command `sorm` mirip dengan Prisma CLI:
 - `sorm makemigrations` = `prisma migrate dev --create-only`
 - `sorm migrate` = `prisma migrate deploy`
 - `sorm db push` = `prisma db push`
-- `sorm createsuperuser` = Create admin user for Django admin panel
+- `sorm createsuperuser` = Create admin user for Django admin panel (interactive)
+- `sorm createdefaultuser` = Create default admin user (admin/admin123) - quick setup!
 - `sorm studio` = `prisma studio` (tapi pake Django Admin)
+
+**Quick Setup:**
+```bash
+# Setup database and create default admin in one go
+sorm db push
+sorm createdefaultuser
+shanks run
+# Visit http://127.0.0.1:8000/admin/ and login with admin/admin123
+```
 
 ### Auto-Type Detection di Routes
 
@@ -462,6 +489,18 @@ app.include(auth, users, posts)
 
 Shanks uses **Unfold** - a modern Django admin theme with Tailwind CSS!
 
+```bash
+# Create project with admin panel
+shanks new myproject --admin
+cd myproject
+sorm db push
+sorm createsuperuser
+shanks run
+# Visit http://127.0.0.1:8000/admin/
+```
+
+Or add to existing project:
+
 ```python
 # In your urls.py
 from shanks import enable_admin
@@ -479,7 +518,7 @@ urlpatterns = [
 ```
 
 Features:
-- 🎨 Modern Unfold theme with Shanks red color scheme
+- 🎨 Modern Unfold theme with Shanks red/black/white color scheme
 - 🎯 Tailwind CSS based design
 - 🌙 Dark mode support
 - 📱 Fully responsive
@@ -489,22 +528,45 @@ Features:
 
 #### Register Models
 
+Create `admin.py` in your app (e.g., `db/admin.py`):
+
 ```python
-# In your entity file or admin.py
-from shanks import register_model
+from django.contrib import admin
 from unfold.admin import ModelAdmin
-from db.entity.posts_entity import Posts
+from .entity.post_entity import Post
 
-# Simple registration (uses Unfold ModelAdmin automatically)
-register_model(Posts)
-
-# With custom Unfold admin
-class PostsAdmin(ModelAdmin):
-    list_display = ['id', 'title', 'created_at']
+@admin.register(Post)
+class PostAdmin(ModelAdmin):
+    list_display = ['title', 'author', 'created_at']
     search_fields = ['title', 'content']
     list_filter = ['created_at']
+```
 
-register_model(Posts, PostsAdmin)
+#### Register User & Group Models
+
+For proper User and Group admin with Unfold:
+
+```python
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User, Group
+from unfold.admin import ModelAdmin
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+
+# Unregister default
+admin.site.unregister(User)
+admin.site.unregister(Group)
+
+# Register with Unfold
+@admin.register(User)
+class UserAdmin(BaseUserAdmin, ModelAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+
+@admin.register(Group)
+class GroupAdmin(ModelAdmin):
+    filter_horizontal = ['permissions']
 ```
 
 #### Customize Admin
@@ -522,12 +584,22 @@ customize_admin(
 #### Create Superuser
 
 ```bash
-# Create admin user with SORM
+# Quick setup - creates admin/admin123
+sorm createdefaultuser
+
+# Or interactive setup - choose your own credentials
 sorm createsuperuser
 
-# Or with Django command
+# Or Django command
 python manage.py createsuperuser
 ```
+
+**Default credentials** (when using `sorm createdefaultuser`):
+- Username: `admin`
+- Password: `admin123`
+- Email: `admin@example.com`
+
+⚠️ **Important**: Change the default password in production!
 
 Visit http://127.0.0.1:8000/admin/ to access the beautiful Unfold admin panel!
 
