@@ -95,6 +95,66 @@ urlpatterns = [*health_router]
 '''
 
 
+def get_routes_init_with_admin_template():
+    """Routes __init__.py template with admin"""
+    return '''"""API Routes"""
+
+# Import all routers
+from .health_route import router as health_router
+from .admin_route import admin_urls
+
+# Export urlpatterns for Django
+urlpatterns = [*admin_urls, *health_router]
+'''
+
+
+def get_admin_route_template():
+    """Admin route template"""
+    return '''"""Admin Panel Routes"""
+from shanks import enable_admin
+
+# Enable admin panel at /admin/
+admin_urls = enable_admin()
+'''
+
+
+def get_admin_template():
+    """Admin configuration template for User and Group"""
+    return '''"""Admin configuration for User and Group models"""
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User, Group
+from unfold.admin import ModelAdmin
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+
+# Unregister default User and Group admin
+admin.site.unregister(User)
+admin.site.unregister(Group)
+
+
+# User Admin with Unfold
+@admin.register(User)
+class UserAdmin(BaseUserAdmin, ModelAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+
+    list_display = ["username", "email", "first_name", "last_name", "is_staff", "is_active"]
+    list_filter = ["is_staff", "is_superuser", "is_active", "groups"]
+    search_fields = ["username", "first_name", "last_name", "email"]
+    ordering = ["username"]
+    filter_horizontal = ["groups", "user_permissions"]
+
+
+# Group Admin with Unfold
+@admin.register(Group)
+class GroupAdmin(ModelAdmin):
+    list_display = ["name"]
+    search_fields = ["name"]
+    filter_horizontal = ["permissions"]
+'''
+
+
 def get_home_view_template(project_name):
     """Home view template (optional, for template rendering)"""
     return f'''"""Home View"""

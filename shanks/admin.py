@@ -26,24 +26,24 @@ from django.conf import settings
 
 def _setup_unfold():
     """Setup Unfold admin theme with Shanks color scheme"""
-    
+
     # Add unfold to INSTALLED_APPS if not already there
-    if hasattr(settings, 'INSTALLED_APPS'):
+    if hasattr(settings, "INSTALLED_APPS"):
         installed_apps = list(settings.INSTALLED_APPS)
-        
+
         # Add unfold before django.contrib.admin
-        if 'unfold' not in installed_apps:
+        if "unfold" not in installed_apps:
             try:
-                admin_index = installed_apps.index('django.contrib.admin')
-                installed_apps.insert(admin_index, 'unfold')
+                admin_index = installed_apps.index("django.contrib.admin")
+                installed_apps.insert(admin_index, "unfold")
                 settings.INSTALLED_APPS = installed_apps
             except ValueError:
                 # django.contrib.admin not found, add unfold at the beginning
-                installed_apps.insert(0, 'unfold')
+                installed_apps.insert(0, "unfold")
                 settings.INSTALLED_APPS = installed_apps
-    
+
     # Configure Unfold with Shanks red/black/white theme
-    if not hasattr(settings, 'UNFOLD'):
+    if not hasattr(settings, "UNFOLD"):
         settings.UNFOLD = {
             "SITE_TITLE": "Shanks Admin",
             "SITE_HEADER": "Shanks Administration",
@@ -62,7 +62,7 @@ def _setup_unfold():
             "SCRIPTS": [],
             "COLORS": {
                 "primary": {
-                    "50": "239 68 68",   # Red
+                    "50": "239 68 68",  # Red
                     "100": "239 68 68",
                     "200": "239 68 68",
                     "300": "239 68 68",
@@ -121,7 +121,7 @@ def enable_admin(path="admin/"):
     """
     # Setup Unfold theme
     _setup_unfold()
-    
+
     return [
         url_path(path, admin.site.urls),
     ]
@@ -156,6 +156,7 @@ def register_model(model, admin_class=None):
         # Use default Unfold ModelAdmin if available
         try:
             from unfold.admin import ModelAdmin
+
             admin.site.register(model, ModelAdmin)
         except ImportError:
             # Fallback to default Django admin

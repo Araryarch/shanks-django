@@ -12,10 +12,12 @@ from .crud_templates import *
 def create_project():
     """Create a new Shanks Django project"""
     if len(sys.argv) < 3:
-        print("Usage: shanks new <project_name>")
+        print("Usage: shanks new <project_name> [--admin]")
         sys.exit(1)
 
     project_name = sys.argv[2]
+    enable_admin = "--admin" in sys.argv
+
     print_banner()
     print(f"Creating new Shanks project: {project_name}\n")
 
@@ -128,10 +130,23 @@ else:
         get_health_route_template(project_name), encoding="utf-8"
     )
 
-    # Create routes __init__.py
-    (internal_dir / "routes" / "__init__.py").write_text(
-        get_routes_init_template(), encoding="utf-8"
-    )
+    # Create routes __init__.py with optional admin
+    if enable_admin:
+        # Create admin route
+        (internal_dir / "routes" / "admin_route.py").write_text(
+            get_admin_route_template(), encoding="utf-8"
+        )
+        # Create routes __init__.py with admin
+        (internal_dir / "routes" / "__init__.py").write_text(
+            get_routes_init_with_admin_template(), encoding="utf-8"
+        )
+        # Create db/admin.py for User and Group admin
+        (db_dir / "admin.py").write_text(get_admin_template(), encoding="utf-8")
+    else:
+        # Create routes __init__.py without admin
+        (internal_dir / "routes" / "__init__.py").write_text(
+            get_routes_init_template(), encoding="utf-8"
+        )
 
     # Create main urls.py that combines routes and views
     main_urls = '''"""Main URL Configuration"""
@@ -195,10 +210,14 @@ urlpatterns = [
     )
 
     print(f"\n✓ Project '{project_name}' created successfully!")
+    if enable_admin:
+        print("✓ Admin panel enabled at /admin/")
     print(f"\nNext steps:")
     print(f"  cd {project_name}")
     print(f"  cp .env.example .env")
     print(f"  sorm db push")
+    if enable_admin:
+        print(f"  sorm createsuperuser")
     print(f"  shanks run")
 
 

@@ -129,9 +129,7 @@ def sorm_main():
         # Create superuser
         print_banner()
         print("Create Admin Superuser\n")
-        subprocess.run(
-            [sys.executable, "manage.py", "createsuperuser"], check=True
-        )
+        subprocess.run([sys.executable, "manage.py", "createsuperuser"], check=True)
 
     elif command == "makemigrations":
         # Pass through to Django
