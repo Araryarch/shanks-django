@@ -5,6 +5,16 @@ All notable changes to Shanks Django will be documented in this file.
 ## [0.5.0] - 2026-03-02
 
 ### Added
+- **Swagger UI Custom Color Scheme**: Shanks red/black/white theme for API docs
+  - Custom CSS styling for Swagger UI matching Shanks design
+  - Red (#ef4444) primary color for buttons and highlights
+  - Black (#000000) background for dark theme
+  - White (#ffffff) text for high contrast
+  - Sharp edges (0 border-radius) for bold, minimalist look
+  - Subtle gray scrollbar (not red)
+  - All UI elements styled: buttons, tables, inputs, code blocks
+  - Professional and consistent with Shanks branding
+
 - **Unfold Admin Theme Integration**: Modern Django admin with Tailwind CSS
   - Integrated `django-unfold>=0.40.0` as default admin theme
   - Automatic setup with `enable_admin()` function
@@ -23,7 +33,15 @@ All notable changes to Shanks Django will be documented in this file.
   - Updates routes to include admin URLs
   - Adds `sorm createsuperuser` to next steps
 
-- **SORM createsuperuser Command**: Easy admin user creation
+- **SORM createdefaultuser Command**: Quick admin user creation
+  - New `sorm createdefaultuser` command
+  - Creates default admin user with username: `admin`, password: `admin123`
+  - Email: `admin@example.com`
+  - No interactive prompts - instant setup
+  - Perfect for development and testing
+  - Shows warning to change password in production
+
+- **SORM createsuperuser Command**: Interactive admin user creation
   - New `sorm createsuperuser` command
   - Interactive prompt for username, email, and password
   - Simpler than using Django's manage.py
@@ -49,11 +67,13 @@ All notable changes to Shanks Django will be documented in this file.
 - Unfold automatically configured with Shanks color scheme
 
 ### Documentation
+- Added Swagger UI section in README with color scheme details
 - Added `UNFOLD_INTEGRATION.md` with complete integration guide
 - Updated Django Admin Panel section in README
 - Added Unfold theme documentation
 - Examples for registering models with Unfold ModelAdmin
 - Instructions for creating superuser with SORM
+- Examples for documenting API routes with Swagger decorators
 
 ## [Unreleased]
 
