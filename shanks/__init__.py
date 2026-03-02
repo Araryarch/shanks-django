@@ -23,7 +23,7 @@ from .cache import (
 from .template import render, render_string, render_html
 from .admin import enable_admin, register_model, unregister_model, customize_admin
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "Ararya"
 __email__ = "araryaarch@gmail.com"
 

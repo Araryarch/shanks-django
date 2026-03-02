@@ -2,6 +2,59 @@
 
 All notable changes to Shanks Django will be documented in this file.
 
+## [0.5.0] - 2026-03-02
+
+### Added
+- **Unfold Admin Theme Integration**: Modern Django admin with Tailwind CSS
+  - Integrated `django-unfold>=0.40.0` as default admin theme
+  - Automatic setup with `enable_admin()` function
+  - Custom Shanks red/black/white color scheme
+  - Modern, responsive design with Tailwind CSS
+  - Dark mode support
+  - Advanced search and filters
+  - Beautiful dashboard
+  - Zero configuration needed
+  - Auto-registers models with Unfold ModelAdmin
+
+- **`--admin` Flag for Project Creation**: Auto-apply admin panel
+  - `shanks new <project> --admin` automatically generates admin setup
+  - Creates `internal/routes/admin_route.py` with `enable_admin()`
+  - Creates `db/admin.py` with User & Group admin configured for Unfold
+  - Updates routes to include admin URLs
+  - Adds `sorm createsuperuser` to next steps
+
+- **SORM createsuperuser Command**: Easy admin user creation
+  - New `sorm createsuperuser` command
+  - Interactive prompt for username, email, and password
+  - Simpler than using Django's manage.py
+  - Integrated with SORM CLI workflow
+
+### Changed
+- **Admin Theme**: Replaced custom templates with Unfold theme
+  - Removed custom Shanks admin templates
+  - Now uses professional Unfold theme
+  - Better UX and more features
+  - Easier to maintain and update
+
+- **Default INSTALLED_APPS**: Now includes 'unfold' by default
+  - `get_installed_apps()` automatically adds 'unfold' before 'django.contrib.admin'
+  - All new projects have Unfold pre-configured
+
+- **Settings Template**: Auto-includes Unfold configuration
+  - New projects automatically get `UNFOLD = get_unfold_config()`
+  - Shanks red/black/white color scheme applied by default
+
+### Dependencies
+- Added `django-unfold>=0.40.0` as core dependency
+- Unfold automatically configured with Shanks color scheme
+
+### Documentation
+- Added `UNFOLD_INTEGRATION.md` with complete integration guide
+- Updated Django Admin Panel section in README
+- Added Unfold theme documentation
+- Examples for registering models with Unfold ModelAdmin
+- Instructions for creating superuser with SORM
+
 ## [Unreleased]
 
 ### Added
