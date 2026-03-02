@@ -605,6 +605,127 @@ Visit http://127.0.0.1:8000/admin/ to access the beautiful Unfold admin panel!
 
 **Note**: Unfold theme is automatically configured with Shanks red/black/white color scheme. No additional setup needed!
 
+### Swagger API Documentation
+
+Shanks includes built-in Swagger UI with custom red/black/white color scheme!
+
+```python
+from shanks import App, enable_swagger
+
+app = App()
+
+# Enable Swagger UI
+enable_swagger(app,
+    title="My API",
+    version="1.0.0",
+    description="API documentation"
+)
+
+# Document your routes
+from shanks import SwaggerUI
+
+@app.get('api/users')
+@SwaggerUI.doc(
+    summary="Get all users",
+    description="Returns a list of all users",
+    responses={200: {"description": "Success"}}
+)
+def get_users(req):
+    return {'users': []}
+
+@app.get('api/users/<user_id>')
+@SwaggerUI.doc(
+    summary="Get user by ID",
+    parameters=[{
+        "name": "user_id",
+        "in": "path",
+        "required": True,
+        "schema": {"type": "integer"}
+    }],
+    responses={
+        200: {"description": "Success"},
+        404: {"description": "User not found"}
+    }
+)
+def get_user(req, user_id):
+    return {'id': user_id}
+```
+
+Visit http://127.0.0.1:8000/docs to see your API documentation!
+
+Features:
+- 🎨 Custom Shanks red/black/white color scheme
+- 📝 Auto-generated from your routes
+- 🔍 Interactive API testing
+- 📊 Request/response examples
+- 🚀 Zero configuration needed
+
+#### Customize Swagger
+
+```python
+# Custom docs URL
+enable_swagger(app, docs_url='api-docs')  # /api-docs instead of /docs
+
+# Custom OpenAPI spec URL
+SwaggerUI.enable(app,
+    title="My API",
+    docs_url="docs",
+    openapi_url="openapi.json"  # /openapi.json
+)
+```
+
+#### Document Parameters
+
+```python
+@app.post('api/posts')
+@SwaggerUI.doc(
+    summary="Create a post",
+    request_body={
+        "required": True,
+        "content": {
+            "application/json": {
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "content": {"type": "string"}
+                    },
+                    "required": ["title"]
+                }
+            }
+        }
+    },
+    responses={
+        201: {"description": "Post created"},
+        400: {"description": "Invalid input"}
+    }
+)
+def create_post(req):
+    return {'created': True}
+```
+
+#### Add Tags
+
+```python
+@app.get('api/users')
+@SwaggerUI.doc(
+    summary="List users",
+    tags=["Users"]
+)
+def list_users(req):
+    return {'users': []}
+
+@app.get('api/posts')
+@SwaggerUI.doc(
+    summary="List posts",
+    tags=["Posts"]
+)
+def list_posts(req):
+    return {'posts': []}
+```
+
+The Swagger UI automatically uses Shanks' signature red (#ef4444), black (#000000), and white (#ffffff) color scheme with sharp edges and bold design!
+
 ### Built-in Caching (Enabled by Default!)
 
 Shanks automatically caches all GET requests - 10x faster responses with zero configuration!
